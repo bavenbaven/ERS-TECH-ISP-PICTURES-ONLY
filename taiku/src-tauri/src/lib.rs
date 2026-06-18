@@ -654,6 +654,11 @@ fn open_url(url: String) -> Result<(), String> {
     Ok(())
 }
 
+#[tauri::command]
+fn close_app(app_handle: tauri::AppHandle) {
+    app_handle.exit(0);
+}
+
 // ── Auth / License Constants ──────────────────────────────────────────────────
 
 const GITHUB_REPO: &str = "bavenbaven/ERS-Tech-ISP--";
@@ -1017,7 +1022,8 @@ pub fn run() {
             xor_encrypt_file,
             xor_decrypt_file,
             xor_encrypt_text,
-            xor_decrypt_text
+            xor_decrypt_text,
+            close_app
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

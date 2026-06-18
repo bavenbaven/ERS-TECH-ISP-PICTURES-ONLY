@@ -748,6 +748,9 @@ img {
       </div>
       <div style="font-size:12px;color:var(--text2);margin-top:8px;">验证中...</div>
     </div>
+    <button onclick="closeLicenseApp()" style="margin-top:16px;padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text3);font-size:13px;cursor:pointer;transition:all .2s;">
+      ✕ 关闭软件
+    </button>
   </div>
 </div>
 
@@ -1119,6 +1122,14 @@ function showLicenseModal() {
 function hideLicenseModal() {
   const modal = document.getElementById('license-modal');
   if (modal) modal.style.display = 'none';
+}
+
+function closeLicenseApp() {
+  if (window.__TAURI_INTERNALS__) {
+    window.__TAURI_INTERNALS__.invoke('close_app');
+  } else {
+    window.close();
+  }
 }
 
 function showLicenseError(msg) {
