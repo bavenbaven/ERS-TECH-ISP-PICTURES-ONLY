@@ -667,7 +667,34 @@ const AUTH_JSON_URLS: &[&str] = &[
     "https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP--/main/auth.json",
 ];
 
-async fn fetch_auth_json() -> Result<String, String> {
+async fn fetch_auth_json(app_handle: &tauri::AppHandle) -> Result<String, String> {
+    // 1. 读取本地 auth.json（打包在 EXE 旁边）
+    if let Some(exe_dir) = app_handle.path().resource_dir().ok() {
+        let local_path = exe_dir.join("auth.json");
+        if local_path.exists() {
+            if let Ok(text) = std::fs::read_to_string(&local_path) {
+                let clean = text.trim_start_matches('\u{feff}');
+                if serde_json::from_str::<serde_json::Value>(clean).is_ok() {
+                    return Ok(clean.to_string());
+                }
+            }
+        }
+    }
+    // 2. 读取 EXE 同目录的 auth.json
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            let local_path = exe_dir.join("auth.json");
+            if local_path.exists() {
+                if let Ok(text) = std::fs::read_to_string(&local_path) {
+                    let clean = text.trim_start_matches('\u{feff}');
+                    if serde_json::from_str::<serde_json::Value>(clean).is_ok() {
+                        return Ok(clean.to_string());
+                    }
+                }
+            }
+        }
+    }
+    // 3. 远程获取
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(10))
         .build()
@@ -693,7 +720,7 @@ async fn verify_license(
     state: tauri::State<'_, AppState>,
     app_handle: tauri::AppHandle,
 ) -> Result<bool, String> {
-    let body = fetch_auth_json().await?;
+    let body = fetch_auth_json(&app_handle).await?;
     let data: AuthData = serde_json::from_str(&body).map_err(|e| {
         format!("解析授权数据失败: {}", e)
     })?;
@@ -766,7 +793,7 @@ async fn check_auth_status(
     }
     let saved_hash = std::fs::read_to_string(&key_path).unwrap_or_default();
 
-    match fetch_auth_json().await {
+    match fetch_auth_json(&app_handle).await {
         Ok(body) => {
             if let Ok(data) = serde_json::from_str::<AuthData>(&body) {
                 let mut valid = false;

@@ -31,7 +31,7 @@
         "https://cdn.jsdelivr.net/gh/bavenbaven/ERS-Tech-ISP--@main/VERSION.json",
         "https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP--/main/VERSION.json"
       ],
-      "pubkey": "RWTfaQ7hwD8Xqh3KO62Su/cEaLCrIqk+udbAIS+Et0ttkmbdSfulxRHo"
+      "pubkey": "RWSmHNSR5K2B3Mhq1dJ3ey631o+5dB5T2TbiV9hB/u/EfnJkUrPJxHyn"
     }
   },
   "bundle": {
@@ -45,6 +45,9 @@
       "icons/128x128@2x.png",
       "icons/icon.icns",
       "icons/icon.ico"
+    ],
+    "resources": [
+      "../auth.json"
     ]
   }
 }
