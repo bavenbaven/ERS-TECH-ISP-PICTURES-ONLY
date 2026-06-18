@@ -1,0 +1,24 @@
+{
+  "identifier": "default",
+  "description": "Default capability for main window",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "core:window:default",
+    "core:window:allow-minimize",
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-close",
+    "core:window:allow-is-maximized",
+    "fs:default",
+    {
+      "identifier": "fs:allow-read",
+      "allow": [
+        "**"
+      ]
+    },
+    "shell:allow-open",
+    "shell:allow-execute"
+  ]
+}

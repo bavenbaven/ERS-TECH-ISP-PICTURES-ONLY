@@ -1,0 +1,16 @@
+{
+  "latest": "1.1.0",
+  "min_version": "0.3.0",
+  "versions": [
+    {
+      "version": "1.1.0",
+      "url": "https://github.com/bavenbaven/ERS-Tech-ISP-%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8/releases/download/v1.1.0/ERS.Tech.ISP.%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8_1.1.0_x64-setup.exe",
+      "changelog": "v1.1.0 更新内容：\n- 添加Tauri自动更新签名验证\n- 版本控制优化\n- 只支持V1.1.0和V0.3.0"
+    },
+    {
+      "version": "0.3.0",
+      "url": "https://github.com/bavenbaven/ERS-Tech-ISP-%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8/releases/download/v0.3.0/ERS.Tech.ISP.%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8_0.3.0_x64-setup.exe",
+      "changelog": "v0.3.0 版本"
+    }
+  ]
+}

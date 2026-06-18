@@ -1,0 +1,50 @@
+{
+  "productName": "ERS Tech ISP 短接宝典",
+  "version": "1.1.0",
+  "identifier": "com.erstech.taiku",
+  "build": {
+    "frontendDist": "../frontend",
+    "devUrl": "http://localhost:1420",
+    "beforeDevCommand": "",
+    "beforeBuildCommand": ""
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "ERS Tech ISP 短接宝典",
+        "label": "main",
+        "width": 1600,
+        "height": 1100,
+        "resizable": true,
+        "fullscreen": false,
+        "decorations": false
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "withGlobalTauri": true
+  },
+  "plugins": {
+    "updater": {
+      "endpoints": [
+        "https://cdn.jsdelivr.net/gh/bavenbaven/ERS-Tech-ISP-短接宝典@main/VERSION.json",
+        "https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP-短接宝典/main/VERSION.json"
+      ],
+      "pubkey": "RWTfaQ7hwD8Xqh3KO62Su/cEaLCrIqk+udbAIS+Et0ttkmbdSfulxRHo"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

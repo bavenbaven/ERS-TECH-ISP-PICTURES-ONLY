@@ -1,0 +1,11 @@
+{
+  "version": "1.1.0",
+  "pub_date": "2026-06-18T00:00:00Z",
+  "notes": "[MIN_VERSION:0.3.0] ERS Tech ISP短接宝典 v1.1.0 - 更新：添加Tauri自动更新签名验证、版本控制优化",
+  "platforms": {
+    "windows-x86_64": {
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHJzaWduIHNlY3JldCBrZXkKUlVUZmFRN2h3RDhYcXU3aXhWK09neXF5UEkwcTd0dVZjQXNCaGcyVDhtVXBBTVVnaTR1b3dhM2loYXdaeGN1UHgrM3dPaFEvRHVzQ3dtenlCazdSNVYxb240bEhXdE1YNlEwPQp0cnVzdGVkIGNvbW1lbnQ6IEVSUyBUZWNoIElTUCDpkK3uhZ/luLTngLnmv4blkIAgdjEuMS4wCjN6QnRXakpkR2pzOTVmVjlkVTBDUkVUN0V2RTZ6dHVoN2tEaHFEQ3FxNnluVE9Od2lmVUZqeXRPa3ZoZGUxWDZQZzVTVVRoYWVRWTF6UU43UEpkU0RBPT0K",
+      "url": "https://github.com/bavenbaven/ERS-Tech-ISP-%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8/releases/download/v1.1.0/ERS.Tech.ISP.%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8_1.1.0_x64-setup.exe"
+    }
+  }
+}
