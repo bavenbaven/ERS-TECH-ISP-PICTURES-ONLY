@@ -634,7 +634,7 @@ fn open_url(url: String) -> Result<(), String> {
 
 // ── Online Update ────────────────────────────────────────────────────────────
 
-const VERSIONS_JSON_URL: &str = "https://cdn.jsdelivr.net/gh/bavenbaven/ERS-Tech-ISP-%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8@main/versions.json";
+const VERSIONS_JSON_URL: &str = "https://cdn.jsdelivr.net/gh/bavenbaven/ERS-Tech-ISP--@main/versions.json";
 
 fn get_current_version() -> String {
     // Embedded at compile time from Cargo.toml
