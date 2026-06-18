@@ -4,7 +4,7 @@
   "notes": "[MIN_VERSION:0.3.0] ERS Tech ISP短接宝典 v1.1.0 - 新增 License Key 授权系统、XOR 数据加密、关闭按钮、Tauri updater 签名验证",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IEVSUyBUZWNoIElTUCDnn63mjqXlrp3lhbggdjEuMS4wClJXUzZabjd0ZDRnanJCazFUQmRycVlYM2FFWkdxVjR0NmxyOFBBVkpqTEVySVRyQ005YmR3SHhsVEg3TVlsT29PdFBNcmhYd0VpZ1RYL3pUSFlBeWNqYU05MC9EODhnNDNRRT0KdHJ1c3RlZCBjb21tZW50OiBmaWxlOkVSUyBUZWNoIElTUCDnn63mjqXlrp3lhbhfMS4xLjBfeDY0LXNldHVwLmV4ZQphaktjVUo1UGRpcGxBMG1ha2diSHc2bjFqQitQaVRDb0JTenNCL016Y2FsQkRhQjBOT2czVnIzZGlCdDl1RTlzaDBZSzFpR1k3a294SE5uQUdncWFBQT09Cg==",
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IEVSUyBUZWNoIElTUCDnn63mjqXlrp3lhbggdjEuMS4wClJXUzZabjd0ZDRnanJHRWg5Z2NiOGsvQ0dCME5jazZ2WWIwaTl1NGh6NDZ4UWdDSzhIS05menk5eGxTZVBndFNSZXdhemg3TmZXcHE5QzJGRngvSDM1TnlmWmg5ZW9KNmdBUT0KdHJ1c3RlZCBjb21tZW50OiBmaWxlOkVSUyBUZWNoIElTUCDnn63mjqXlrp3lhbhfMS4xLjBfeDY0LXNldHVwLmV4ZQpRKzRwdjg1T0pEQ3Q3Nlk1RFdrb0x6aUt6bnhoVkxYOHJkbFpYQWozNE5hTDg3Q2g4QlZkWlkxZldOUEdKZUlNcWNTZDZvWkUwQ1Z5dzNFbjNibHpCZz09Cg==",
       "url": "https://github.com/bavenbaven/ERS-Tech-ISP--/releases/download/v1.1.0/ERS Tech ISP 短接宝典_1.1.0_x64-setup.exe"
     }
   }

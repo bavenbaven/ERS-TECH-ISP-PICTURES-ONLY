@@ -663,14 +663,14 @@ fn close_app(app_handle: tauri::AppHandle) {
 
 const GITHUB_REPO: &str = "bavenbaven/ERS-Tech-ISP--";
 const AUTH_JSON_URLS: &[&str] = &[
-    "https://cdn.jsdelivr.net/gh/bavenbaven/ERS-Tech-ISP--@main/auth.json",
-    "https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP--/main/auth.json",
+    "https://cdn.jsdelivr.net/gh/bavenbaven/ERS-Tech-ISP--@master/auth.json",
+    "https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP--/master/auth.json",
 ];
 
 async fn fetch_auth_json(app_handle: &tauri::AppHandle) -> Result<String, String> {
-    // 1. 读取本地 auth.json（打包在 EXE 旁边）
-    if let Some(exe_dir) = app_handle.path().resource_dir().ok() {
-        let local_path = exe_dir.join("auth.json");
+    // 1. Tauri resource_dir
+    if let Ok(resource_dir) = app_handle.path().resource_dir() {
+        let local_path = resource_dir.join("auth.json");
         if local_path.exists() {
             if let Ok(text) = std::fs::read_to_string(&local_path) {
                 let clean = text.trim_start_matches('\u{feff}');
@@ -680,7 +680,7 @@ async fn fetch_auth_json(app_handle: &tauri::AppHandle) -> Result<String, String
             }
         }
     }
-    // 2. 读取 EXE 同目录的 auth.json
+    // 2. EXE 同目录
     if let Ok(exe_path) = std::env::current_exe() {
         if let Some(exe_dir) = exe_path.parent() {
             let local_path = exe_dir.join("auth.json");
@@ -694,7 +694,35 @@ async fn fetch_auth_json(app_handle: &tauri::AppHandle) -> Result<String, String
             }
         }
     }
-    // 3. 远程获取
+    // 3. NSIS 安装目录（exe_dir/../../auth.json）
+    if let Ok(exe_path) = std::env::current_exe() {
+        if let Some(exe_dir) = exe_path.parent() {
+            if let Some(install_dir) = exe_dir.parent() {
+                let local_path = install_dir.join("auth.json");
+                if local_path.exists() {
+                    if let Ok(text) = std::fs::read_to_string(&local_path) {
+                        let clean = text.trim_start_matches('\u{feff}');
+                        if serde_json::from_str::<serde_json::Value>(clean).is_ok() {
+                            return Ok(clean.to_string());
+                        }
+                    }
+                }
+            }
+        }
+    }
+    // 4. 当前工作目录
+    if let Ok(cwd) = std::env::current_dir() {
+        let local_path = cwd.join("auth.json");
+        if local_path.exists() {
+            if let Ok(text) = std::fs::read_to_string(&local_path) {
+                let clean = text.trim_start_matches('\u{feff}');
+                if serde_json::from_str::<serde_json::Value>(clean).is_ok() {
+                    return Ok(clean.to_string());
+                }
+            }
+        }
+    }
+    // 5. 远程获取
     let client = reqwest::Client::builder()
         .timeout(std::time::Duration::from_secs(10))
         .build()
