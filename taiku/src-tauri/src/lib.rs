@@ -1,7 +1,29 @@
 use base64::Engine;
+use hex::encode as hex_encode;
+use sha2::{Digest, Sha256};
+use std::collections::HashMap;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use tauri::{AppHandle, Emitter};
+use std::sync::Mutex;
+use tauri::{AppHandle, Emitter, Manager};
+
+// ── Auth / License System ─────────────────────────────────────────────────────
+
+struct AppState {
+    unlocked: Mutex<bool>,
+}
+
+#[derive(serde::Deserialize, Debug)]
+struct AuthData {
+    #[serde(default)]
+    keys: Vec<String>,
+    #[serde(default)]
+    users: HashMap<String, String>,
+    #[serde(default)]
+    allowed_versions: Option<Vec<String>>,
+    #[serde(default)]
+    passwords: HashMap<String, String>,
+}
 
 const IMAGE_EXTS: &[&str] = &["png", "jpg", "jpeg", "webp", "bmp", "gif"];
 
@@ -632,6 +654,201 @@ fn open_url(url: String) -> Result<(), String> {
     Ok(())
 }
 
+// ── Auth / License Constants ──────────────────────────────────────────────────
+
+const GITHUB_REPO: &str = "bavenbaven/ERS-Tech-ISP--";
+const AUTH_JSON_URLS: &[&str] = &[
+    "https://cdn.jsdelivr.net/gh/bavenbaven/ERS-Tech-ISP--@main/auth.json",
+    "https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP--/main/auth.json",
+];
+
+async fn fetch_auth_json() -> Result<String, String> {
+    let client = reqwest::Client::builder()
+        .timeout(std::time::Duration::from_secs(10))
+        .build()
+        .map_err(|e| format!("创建请求失败: {}", e))?;
+    for url in AUTH_JSON_URLS {
+        if let Ok(resp) = client.get(*url).send().await {
+            if let Ok(text) = resp.text().await {
+                let clean = text.trim_start_matches('\u{feff}');
+                if serde_json::from_str::<serde_json::Value>(clean).is_ok() {
+                    return Ok(clean.to_string());
+                }
+            }
+        }
+    }
+    Err("无法获取授权数据".to_string())
+}
+
+#[tauri::command]
+async fn verify_license(
+    key: Option<String>,
+    username: Option<String>,
+    password: Option<String>,
+    state: tauri::State<'_, AppState>,
+    app_handle: tauri::AppHandle,
+) -> Result<bool, String> {
+    let body = fetch_auth_json().await?;
+    let data: AuthData = serde_json::from_str(&body).map_err(|e| {
+        format!("解析授权数据失败: {}", e)
+    })?;
+
+    let app_version = app_handle.package_info().version.to_string();
+    if let Some(versions) = &data.allowed_versions {
+        if !versions.is_empty() && !versions.contains(&app_version) {
+            return Err(format!(
+                "当前版本 (v{}) 已停止服务，请下载最新版本。",
+                app_version
+            ));
+        }
+    }
+
+    let mut success = false;
+
+    let hash_input = match (&key, &username, &password) {
+        (Some(k), _, _) => {
+            let mut hasher = Sha256::new();
+            hasher.update(k.as_bytes());
+            let hash = hex_encode(hasher.finalize());
+            if data.keys.contains(&hash) {
+                success = true;
+            }
+            hash
+        }
+        (_, Some(u), Some(p)) => {
+            let mut hasher = Sha256::new();
+            hasher.update(p.as_bytes());
+            let hash = hex_encode(hasher.finalize());
+            if let Some(expected) = data.users.get(u) {
+                if expected == &hash {
+                    success = true;
+                }
+            }
+            format!("{}:{}", u, hash)
+        }
+        _ => return Err("Invalid input".to_string()),
+    };
+
+    if success {
+        *state.unlocked.lock().unwrap() = true;
+        let app_dir = app_handle
+            .path()
+            .app_data_dir()
+            .unwrap_or_else(|_| std::path::PathBuf::from("."));
+        let _ = std::fs::create_dir_all(&app_dir);
+        let _ = std::fs::write(app_dir.join("auth.key"), hash_input);
+        Ok(true)
+    } else {
+        Err("Authentication failed".to_string())
+    }
+}
+
+#[tauri::command]
+async fn check_auth_status(
+    state: tauri::State<'_, AppState>,
+    app_handle: tauri::AppHandle,
+) -> Result<bool, String> {
+    if *state.unlocked.lock().unwrap() {
+        return Ok(true);
+    }
+    let app_dir = app_handle
+        .path()
+        .app_data_dir()
+        .unwrap_or_else(|_| std::path::PathBuf::from("."));
+    let key_path = app_dir.join("auth.key");
+    if !key_path.exists() {
+        return Ok(false);
+    }
+    let saved_hash = std::fs::read_to_string(&key_path).unwrap_or_default();
+
+    match fetch_auth_json().await {
+        Ok(body) => {
+            if let Ok(data) = serde_json::from_str::<AuthData>(&body) {
+                let mut valid = false;
+                if saved_hash.contains(":") {
+                    let parts: Vec<&str> = saved_hash.splitn(2, ':').collect();
+                    if parts.len() == 2 {
+                        if let Some(expected) = data.users.get(parts[0]) {
+                            if expected == parts[1] {
+                                valid = true;
+                            }
+                        }
+                    }
+                } else {
+                    if data.keys.contains(&saved_hash) {
+                        valid = true;
+                    }
+                }
+
+                if valid {
+                    if let Some(versions) = &data.allowed_versions {
+                        let app_version = app_handle.package_info().version.to_string();
+                        if !versions.is_empty() && !versions.contains(&app_version) {
+                            valid = false;
+                        }
+                    }
+                }
+
+                if valid {
+                    *state.unlocked.lock().unwrap() = true;
+                    return Ok(true);
+                } else {
+                    let _ = std::fs::remove_file(&key_path);
+                    return Ok(false);
+                }
+            }
+        }
+        Err(_) => {
+            // Network failure => allow use
+            *state.unlocked.lock().unwrap() = true;
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+// ── XOR Encryption ────────────────────────────────────────────────────────────
+
+const XOR_KEY: &[u8] = b"ERS-Tech-ISP-XOR-2024";
+
+fn xor_encrypt(data: &[u8]) -> Vec<u8> {
+    data.iter()
+        .enumerate()
+        .map(|(i, b)| b ^ XOR_KEY[i % XOR_KEY.len()])
+        .collect()
+}
+
+#[tauri::command]
+fn xor_encrypt_file(input_path: String, output_path: String) -> Result<String, String> {
+    let data = std::fs::read(&input_path).map_err(|e| format!("读取文件失败: {}", e))?;
+    let encrypted = xor_encrypt(&data);
+    std::fs::write(&output_path, &encrypted).map_err(|e| format!("写入文件失败: {}", e))?;
+    Ok(output_path)
+}
+
+#[tauri::command]
+fn xor_decrypt_file(input_path: String, output_path: String) -> Result<String, String> {
+    let data = std::fs::read(&input_path).map_err(|e| format!("读取文件失败: {}", e))?;
+    let decrypted = xor_encrypt(&data); // XOR is symmetric
+    std::fs::write(&output_path, &decrypted).map_err(|e| format!("写入文件失败: {}", e))?;
+    Ok(output_path)
+}
+
+#[tauri::command]
+fn xor_encrypt_text(text: String) -> Result<String, String> {
+    let encrypted = xor_encrypt(text.as_bytes());
+    Ok(base64::engine::general_purpose::STANDARD.encode(&encrypted))
+}
+
+#[tauri::command]
+fn xor_decrypt_text(encoded: String) -> Result<String, String> {
+    let data = base64::engine::general_purpose::STANDARD
+        .decode(&encoded)
+        .map_err(|e| format!("Base64 解码失败: {}", e))?;
+    let decrypted = xor_encrypt(&data);
+    String::from_utf8(decrypted).map_err(|e| format!("UTF-8 解码失败: {}", e))
+}
+
 // ── Online Update ────────────────────────────────────────────────────────────
 
 const VERSIONS_JSON_URL: &str = "https://cdn.jsdelivr.net/gh/bavenbaven/ERS-Tech-ISP--@main/versions.json";
@@ -770,6 +987,9 @@ pub fn run() {
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
+        .manage(AppState {
+            unlocked: Mutex::new(false),
+        })
         .invoke_handler(tauri::generate_handler![
             get_base_dir_str,
             get_metadata,
@@ -791,7 +1011,13 @@ pub fn run() {
             upload_local_images,
             fetch_versions_json,
             check_version_block,
-            download_update
+            download_update,
+            verify_license,
+            check_auth_status,
+            xor_encrypt_file,
+            xor_decrypt_file,
+            xor_encrypt_text,
+            xor_decrypt_text
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

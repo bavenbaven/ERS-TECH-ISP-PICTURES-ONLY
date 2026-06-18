@@ -306,6 +306,7 @@ header .settings-btn:hover{
 @keyframes slideIn{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+@keyframes loading{0%{width:0%}50%{width:70%}100%{width:100%}}
 .loading{
   color:var(--text3);font-size:13px;animation:pulse 1.5s infinite;
   text-align:center;padding:20px;
@@ -715,6 +716,41 @@ img {
   </div>
 </div>
 
+<!-- License 验证弹窗 -->
+<div class="modal-overlay" id="license-modal" style="display:none;z-index:10001;">
+  <div class="modal" style="max-width:420px;text-align:center;">
+    <div style="font-size:48px;margin-bottom:16px;">🔐</div>
+    <h2 style="font-size:18px;margin-bottom:12px;color:var(--accent);">软件授权验证</h2>
+    <p style="font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:20px;">
+      请输入授权码或账号密码以继续使用
+    </p>
+    <div id="license-tab-key" style="margin-bottom:16px;">
+      <input id="license-key-input" type="text" placeholder="授权码 (如: ISP-2024-ABCD-EFGH)"
+        style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;margin-bottom:12px;">
+      <button onclick="verifyLicenseKey()" class="btn-primary" style="width:100%;padding:12px;font-size:14px;">
+        ✅ 验证授权码
+      </button>
+    </div>
+    <div style="text-align:center;color:var(--text3);font-size:12px;margin:12px 0;">— 或 —</div>
+    <div id="license-tab-user">
+      <input id="license-user-input" type="text" placeholder="用户名"
+        style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;margin-bottom:8px;">
+      <input id="license-pass-input" type="password" placeholder="密码"
+        style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;margin-bottom:12px;">
+      <button onclick="verifyLicenseUser()" class="btn-primary" style="width:100%;padding:12px;font-size:14px;">
+        🔑 登录验证
+      </button>
+    </div>
+    <div id="license-error" style="color:var(--accent2);font-size:13px;margin-top:12px;display:none;"></div>
+    <div id="license-loading" style="display:none;margin-top:12px;">
+      <div style="width:100%;background:rgba(255,255,255,.1);height:4px;border-radius:2px;overflow:hidden;">
+        <div id="license-bar" style="width:30%;height:100%;background:var(--accent);animation:loading 1s infinite;"></div>
+      </div>
+      <div style="font-size:12px;color:var(--text2);margin-top:8px;">验证中...</div>
+    </div>
+  </div>
+</div>
+
 <!-- 版本锁定弹窗 -->
 <div class="modal-overlay" id="version-block-modal" style="display:none;z-index:10000;">
   <div class="modal" style="max-width:420px;text-align:center;">
@@ -1064,6 +1100,78 @@ function _isVersionNewer(a, b) {
   return false;
 }
 
+// ===== License 验证系统 =====
+
+async function checkAuthStatus() {
+  try {
+    return await invoke('check_auth_status');
+  } catch (e) {
+    console.error('Auth check failed:', e);
+    return false;
+  }
+}
+
+function showLicenseModal() {
+  const modal = document.getElementById('license-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function hideLicenseModal() {
+  const modal = document.getElementById('license-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function showLicenseError(msg) {
+  const el = document.getElementById('license-error');
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+
+function hideLicenseError() {
+  const el = document.getElementById('license-error');
+  if (el) el.style.display = 'none';
+}
+
+function showLicenseLoading(show) {
+  const el = document.getElementById('license-loading');
+  if (el) el.style.display = show ? 'block' : 'none';
+}
+
+async function verifyLicenseKey() {
+  const key = document.getElementById('license-key-input').value.trim();
+  if (!key) { showLicenseError('请输入授权码'); return; }
+  hideLicenseError();
+  showLicenseLoading(true);
+  try {
+    await invoke('verify_license', { key: key });
+    hideLicenseModal();
+    localStorage.setItem('license_verified', 'true');
+    // Re-run init after successful auth
+    await init();
+  } catch (e) {
+    showLicenseError('授权码无效: ' + e);
+  } finally {
+    showLicenseLoading(false);
+  }
+}
+
+async function verifyLicenseUser() {
+  const username = document.getElementById('license-user-input').value.trim();
+  const password = document.getElementById('license-pass-input').value.trim();
+  if (!username || !password) { showLicenseError('请输入用户名和密码'); return; }
+  hideLicenseError();
+  showLicenseLoading(true);
+  try {
+    await invoke('verify_license', { username: username, password: password });
+    hideLicenseModal();
+    localStorage.setItem('license_verified', 'true');
+    await init();
+  } catch (e) {
+    showLicenseError('登录失败: ' + e);
+  } finally {
+    showLicenseLoading(false);
+  }
+}
+
 async function _getAppVersion() {
   try {
     if (window.__TAURI__ && window.__TAURI__.app && window.__TAURI__.app.getVersion) {
@@ -1269,6 +1377,13 @@ async function init() {
   // Version check FIRST — may block the entire app
   const isBlocked = await _startupVersionCheck();
   if (isBlocked) return; // App is blocked, do not initialize
+
+  // License verification check
+  const isAuth = await checkAuthStatus();
+  if (!isAuth) {
+    showLicenseModal();
+    return; // Wait for license verification
+  }
 
   appMode = localStorage.getItem('app_mode') || 'github';
   localCustomPath = localStorage.getItem('local_custom_path') || 'D:\\ERS-Tech-ISP-Images';
