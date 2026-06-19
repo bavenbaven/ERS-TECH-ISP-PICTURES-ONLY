@@ -28,8 +28,8 @@
   "plugins": {
     "updater": {
       "endpoints": [
-        "https://cdn.jsdelivr.net/gh/bavenbaven/ERS-Tech-ISP--@master/VERSION.json",
-        "https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP--/master/VERSION.json"
+        "https://cdn.jsdelivr.net/gh/bavenbaven/ERS-Tech-ISP-Images@main/VERSION.json",
+        "https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP-Images/main/VERSION.json"
       ],
       "pubkey": "RWQWsfm97+uNgA3M86MRoKn2eKtFXiL5dr9dWqxiozEj8WTqlg"
     }

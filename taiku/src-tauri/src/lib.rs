@@ -661,10 +661,10 @@ fn close_app(app_handle: tauri::AppHandle) {
 
 // ── Auth / License Constants ──────────────────────────────────────────────────
 
-const GITHUB_REPO: &str = "bavenbaven/ERS-Tech-ISP--";
+const GITHUB_REPO: &str = "bavenbaven/ERS-Tech-ISP-Images";
 const AUTH_JSON_URLS: &[&str] = &[
-    "https://cdn.jsdelivr.net/gh/bavenbaven/ERS-Tech-ISP--@master/auth.json",
-    "https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP--/master/auth.json",
+        "https://cdn.jsdelivr.net/gh/bavenbaven/ERS-Tech-ISP-Images@main/auth.json",
+        "https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP-Images/main/auth.json",
 ];
 
 async fn fetch_auth_json(app_handle: &tauri::AppHandle) -> Result<String, String> {
@@ -911,7 +911,7 @@ fn xor_decrypt_text(encoded: String) -> Result<String, String> {
 
 // ── Online Update ────────────────────────────────────────────────────────────
 
-const VERSIONS_JSON_URL: &str = "https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP--/master/versions.json";
+const VERSIONS_JSON_URL: &str = "https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP-Images/main/versions.json";
 
 fn get_current_version() -> String {
     // Embedded at compile time from Cargo.toml
