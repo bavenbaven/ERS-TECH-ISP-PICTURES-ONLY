@@ -1,11 +1,11 @@
 {
   "version": "2.1.0",
   "pub_date": "2026-06-19T10:00:00Z",
-  "notes": "[MIN_VERSION:0.3.0] ERS Tech ISP短接宝典 v2.1.0 - 修复授权验证、修复在线更新URL、新增200个账号",
+  "notes": "[MIN_VERSION:0.3.0] ERS Tech ISP v2.1.0",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IEVSUyBUZWNoIElTUCDnn63mjqXlrp3lhbggdjIuMS4wClJXUzZabjd0ZDRnanJEMm45dWRTQWZ3ZmZ4QUVINTNySXhqdXNWLzZvUllnMXZ4VzQ3SHlNY1dRNUEwYzlRdGFQd2JtZXpsdmN5bFpFeC8vaWo0TmhET2dzL0FOV1lRWkJnaz0KdHJ1c3RlZCBjb21tZW50OiBmaWxlOkVSUyBUZWNoIElTUCDnn63mjqXlrp3lhbhfMi4xLjBfeDY0LXNldHVwLmV4ZQpVRFRQbEJRaDVBelAxL09wbWp3OTJuN2EyaHJzUVdUWDNjNE85WTZObDMzUDd2dmd0YlU5aHBCRkpkSFhwMkNGTlBxWWtWNnFLV05wWXVGZDlTZmVCQT09Cg==",
-      "url": "https://github.com/bavenbaven/ERS-Tech-ISP--/releases/download/v2.1.0/ERS Tech ISP 短接宝典_2.1.0_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IEVSUyBUZWNoIElTUCBTaG9ydC1Db25uZWN0IHYyLjEuMApSV1NkZ253VDZkZ1dVUTNRa1NGT1BqTVcvSTZ3dVYwTFhMc2NNWXNQbEZCU1FHeWZqRWhpQ1RXUHcrL25XOFYvcTRXcHdOWTBxeHc0c0MybkdkSHdTN0lMQTl2ZTM4VXJ4d3c9CmZpbGU6RVJTLlRlY2guSVNQLl8yLjEuMF94NjQtc2V0dXAuZXhlCjE3d2JhejRiTmRSYkZxd0M1Si8yaEJuZkRMc04yZUZBejN1RCtpaG90bXdVcnE2L3BpV0p5UmcvelUrK3ZwYVBobG8xSEhTOXdlYkxRd3VBQjdHSkFnPT0K",
+      "url": "https://github.com/bavenbaven/ERS-Tech-ISP-Images/releases/download/v2.1.0/ERS.Tech.ISP._2.1.0_x64-setup.exe"
     }
   }
 }
