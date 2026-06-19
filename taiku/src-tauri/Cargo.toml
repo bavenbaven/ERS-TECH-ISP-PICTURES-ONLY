@@ -1,6 +1,6 @@
 [package]
 name = "taiku"
-version = "1.1.0"
+version = "2.1.0"
 description = "ERS Tech ISP短接宝典"
 authors = ["ERS Tech"]
 edition = "2021"

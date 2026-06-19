@@ -1,11 +1,16 @@
 {
-  "latest": "1.1.0",
+  "latest": "2.1.0",
   "min_version": "0.3.0",
   "versions": [
     {
+      "version": "2.1.0",
+      "url": "https://github.com/bavenbaven/ERS-Tech-ISP--/releases/download/v2.1.0/ERS Tech ISP 短接宝典_2.1.0_x64-setup.exe",
+      "changelog": "修复授权验证、修复在线更新URL、新增200个账号"
+    },
+    {
       "version": "1.1.0",
-      "url": "https://github.com/bavenbaven/ERS-Tech-ISP--/releases/download/v1.1.0/ERS-Tech-ISP-短接宝典_1.1.0_x64-setup.exe",
-      "changelog": "新增 Tauri updater 签名验证、License Key 授权系统、XOR 加密导出"
+      "url": "https://github.com/bavenbaven/ERS-Tech-ISP--/releases/download/v1.1.0/ERS Tech ISP 短接宝典_1.1.0_x64-setup.exe",
+      "changelog": "新增 License Key 授权系统、XOR 数据加密、关闭按钮、Tauri updater 签名验证"
     },
     {
       "version": "0.3.0",

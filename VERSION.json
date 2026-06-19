@@ -1,11 +1,11 @@
 {
-  "version": "1.1.0",
-  "pub_date": "2026-06-18T14:00:00Z",
-  "notes": "[MIN_VERSION:0.3.0] ERS Tech ISP短接宝典 v1.1.0 - 新增 License Key 授权系统、XOR 数据加密、关闭按钮、Tauri updater 签名验证",
+  "version": "2.1.0",
+  "pub_date": "2026-06-19T10:00:00Z",
+  "notes": "[MIN_VERSION:0.3.0] ERS Tech ISP短接宝典 v2.1.0 - 修复授权验证、修复在线更新URL、新增200个账号",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IEVSUyBUZWNoIElTUCDnn63mjqXlrp3lhbggdjEuMS4wClJXUzZabjd0ZDRnanJCdjJDZC9iWnk3TnFRUnA5ZU4wNUs1MUd6Y3Z6Z0YyNVlZS2gyU29Oc0ZlSTdDN2cwbysrdmpLcUw2U2I3V0xFN2w5MDlUakZNY3NNTDdoZnplOHJncz0KdHJ1c3RlZCBjb21tZW50OiBmaWxlOkVSUyBUZWNoIElTUCDnn63mjqXlrp3lhbhfMS4xLjBfeDY0LXNldHVwLmV4ZQpWSGwrWjdoamNIcTlYQnV3NHlWVjZWcURqdVVWUEhyWUNlOEhvcVR6QTN2cUVQc3BxaDNWTUhaV0N4bkc5RTlaRlBsZmVyLzRBbUNjNkxZeDBXcFFCdz09Cg==",
-      "url": "https://github.com/bavenbaven/ERS-Tech-ISP--/releases/download/v1.1.0/ERS Tech ISP 短接宝典_1.1.0_x64-setup.exe"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IEVSUyBUZWNoIElTUCDnn63mjqXlrp3lhbggdjIuMS4wClJXUzZabjd0ZDRnanJJWWxOaC9sODlvWGlIZDZiWStjMXhCOTh2cVVQT2VtTzRTc3dMSEpwSDdRSkk2VUlqNnJ0WHZGNXM5bWFqaHAwRkJFdTZtSExRR1JEakEzbU5VaDBBMD0KdHJ1c3RlZCBjb21tZW50OiBmaWxlOkVSUyBUZWNoIElTUCDnn63mjqXlrp3lhbhfMi4xLjBfeDY0LXNldHVwLmV4ZQpxQWhRaVJCS04yUGxzSjZiK2E3WFF3TzZxUkQ2cUNVWmdYazR0ZGg2cmI2SzI0ZmVGejZpQXYycHRGakZVcGFNWVUzbU9ZaGdYQUpMd3gvSis5dmJEQT09Cg==",
+      "url": "https://github.com/bavenbaven/ERS-Tech-ISP--/releases/download/v2.1.0/ERS Tech ISP 短接宝典_2.1.0_x64-setup.exe"
     }
   }
 }
