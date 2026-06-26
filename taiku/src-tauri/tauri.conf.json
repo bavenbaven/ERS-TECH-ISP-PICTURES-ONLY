@@ -1,6 +1,6 @@
 {
   "productName": "ERS Tech ISP 短接宝典",
-  "version": "2.1.0",
+  "version": "3.1.0",
   "identifier": "com.erstech.taiku",
   "build": {
     "frontendDist": "../frontend",
@@ -31,7 +31,7 @@
         "https://cdn.jsdelivr.net/gh/bavenbaven/ERS-Tech-ISP-Images@main/VERSION.json",
         "https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP-Images/main/VERSION.json"
       ],
-      "pubkey": "RWQWsfm97+uNgA3M86MRoKn2eKtFXiL5dr9dWqxiozEj8WTqlg"
+      "pubkey": "RWSdgnwT6dgWUd41XyVqE8tV7ar2iIcR+fgg+aIAnayxbB6xyXSz1Lzu"
     }
   },
   "bundle": {

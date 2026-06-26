@@ -635,15 +635,19 @@ img {
     </div>
     <div class="form-group">
       <label>工作模式</label>
-      <select id="setting-mode" onchange="toggleModeFields()">
-        <option value="local">本地离线模式 (Local Offline)</option>
-        <option value="github">云端加密流媒体模式 (Cloud Streaming - 推荐)</option>
-      </select>
+      <div id="setting-mode" style="display:flex;gap:8px;margin-top:6px;">
+        <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:rgba(255,255,255,.03);transition:all .2s;flex:1;" id="mode-local-label">
+          <input type="radio" name="work-mode" value="local" onchange="toggleModeFields()" style="accent-color:var(--accent);"> 本地离线模式
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;background:rgba(255,255,255,.03);transition:all .2s;flex:1;" id="mode-github-label">
+          <input type="radio" name="work-mode" value="github" onchange="toggleModeFields()" style="accent-color:var(--accent);"> 云端模式 (推荐)
+        </label>
+      </div>
     </div>
     <div id="local-fields" style="display:none">
       <div class="form-group">
         <label>本地图纸库文件夹路径</label>
-        <input type="text" id="setting-local-path" placeholder="例如: D:\ERS-Tech-ISP-Images">
+        <input type="text" id="setting-local-path" placeholder="例如: D:\Software-Releases\ERS-TECH-ISP短接宝典">
       </div>
     </div>
     <div id="github-fields" style="display:none">
@@ -736,7 +740,11 @@ img {
       <input id="license-user-input" type="text" placeholder="用户名"
         style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;margin-bottom:8px;">
       <input id="license-pass-input" type="password" placeholder="密码"
-        style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;margin-bottom:12px;">
+        style="width:100%;padding:12px;border-radius:8px;border:1px solid var(--border);background:var(--bg2);color:var(--text);font-size:14px;margin-bottom:8px;">
+      <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px;cursor:pointer;font-size:13px;color:var(--text2);">
+        <input type="checkbox" id="remember-me-checkbox" style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer;">
+        记住密码
+      </label>
       <button onclick="verifyLicenseUser()" class="btn-primary" style="width:100%;padding:12px;font-size:14px;">
         🔑 登录验证
       </button>
@@ -787,7 +795,7 @@ let brandCache = {};
 let gridObserver = null;       // IntersectionObserver 实例
 let imageLoadQueue = [];       // 等待加载的卡片队列
 let activeImageLoads = 0;      // 当前正在加载的图片数
-const MAX_CONCURRENT_LOADS = 3; // 最多同时加载3张图片
+let MAX_CONCURRENT_LOADS = 3; // Updated when mode changes
 
 var THEMES = {
   'default':{n:'默认暗黑',accent:'#5eafff',a2:'#e94560',a3:'#f0a500',a4:'#a78bfa',bg:'#0a0e14',bg2:'#10151d',card:'#151c27',card2:'#1a2332',border:'#252d3a',text:'#dfe6f0',text2:'#7a8ba0',text3:'#4e5d6e',hover:'#1a2535',glowR:94,glowG:175,glowB:255,bodyR:94,bodyG:175,bodyB:255,body2R:167,body2G:139,body2B:250,body3R:78,body3G:205,body3B:196},
@@ -903,15 +911,16 @@ let editMode = false;
 let selectedAnnot = -1;
 
 let appMode = localStorage.getItem('app_mode') || 'github';
-let localCustomPath = localStorage.getItem('local_custom_path') || 'D:\\ERS-Tech-ISP-Images';
+let localCustomPath = localStorage.getItem('local_custom_path') || 'D:\\Software-Releases\\ERS-TECH-ISP短接宝典';
 let localPreviewMode = false;
 let pendingLocalChanges = false;
 let isSyncing = false;
 
 let ghBlobCache = {}; // cache for GitHub image blob URLs
+let localImageCache = {}; // cache for local image data URLs
 
 function getCdnBase(brand) {
-  const base = atob('aHR0cHM6Ly9jZG4uanNkZWxpdnIubmV0L2doL2JhdmVuYmF2ZW4vRVJTLVRlY2gtSVNQLUltYWdlc0BtYWlu');
+  const base = atob('aHR0cHM6Ly9jZG4uanNkZWxpdnIubmV0L2doL2JhdmVuYmF2ZW4vU29mdHdhcmUtUmVsZWFzZXNAbWFpbi9FUlMtVEVDSC1JU1Dnn63mjqXlrp3lhbg=');
   if (window.currentGhSha) {
     return base.replace('@main', '@' + window.currentGhSha);
   }
@@ -951,7 +960,7 @@ async function loadOnlineLibrary(skipCache) {
     try {
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 3000);
-      const shaRes = await fetch('https://api.github.com/repos/bavenbaven/ERS-Tech-ISP-Images/commits/main', { cache: 'no-store', signal: controller.signal });
+      const shaRes = await fetch('https://api.github.com/repos/bavenbaven/Software-Releases/commits/main', { cache: 'no-store', signal: controller.signal });
       clearTimeout(timeoutId);
       if (shaRes.ok) {
         const shaData = await shaRes.json();
@@ -966,7 +975,7 @@ async function loadOnlineLibrary(skipCache) {
 
   let ghUrl;
   if (skipCache) {
-    ghUrl = 'https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP-Images/main/metadata.json?_t=' + Date.now();
+    ghUrl = 'https://raw.githubusercontent.com/bavenbaven/Software-Releases/main/ERS-TECH-ISP短接宝典/metadata.json?_t=' + Date.now();
   } else {
     ghUrl = getCdnBase() + '/metadata.json';
   }
@@ -979,7 +988,7 @@ async function loadOnlineLibrary(skipCache) {
 
 async function checkLocalUpdatesOnStart() {
   if (appMode !== 'github') return false;
-  const scanPath = localCustomPath || 'D:\\ERS-Tech-ISP-Images';
+  const scanPath = localCustomPath || 'D:\\Software-Releases\\ERS-TECH-ISP短接宝典';
   const res = await invoke('rebuild_metadata', { basePath: scanPath });
   localBaseDir = scanPath;
   localPreviewMode = true;
@@ -990,6 +999,7 @@ async function checkLocalUpdatesOnStart() {
     // Let the sync run in the background without blocking startup
     invoke('sync_to_github', { basePath: scanPath }).then(sync => {
       ghBlobCache = {};
+      localImageCache = {};
       if (sync.commit_hash) {
         window.currentGhSha = sync.commit_hash;
         setSyncNotice('<strong>已自动同步</strong>，CDN 缓存已清除，刷新后即可看到更新。', true);
@@ -1173,6 +1183,17 @@ async function verifyLicenseUser() {
   showLicenseLoading(true);
   try {
     await invoke('verify_license', { username: username, password: password });
+    // 记住密码：保存凭据到 localStorage
+    const remember = document.getElementById('remember-me-checkbox').checked;
+    if (remember) {
+      localStorage.setItem('saved_username', username);
+      localStorage.setItem('saved_password', password);
+      localStorage.setItem('remember_me', 'true');
+    } else {
+      localStorage.removeItem('saved_username');
+      localStorage.removeItem('saved_password');
+      localStorage.removeItem('remember_me');
+    }
     hideLicenseModal();
     localStorage.setItem('license_verified', 'true');
     await init();
@@ -1385,24 +1406,35 @@ async function _settingsShowVersion() {
 }
 
 async function init() {
-  // Version check FIRST — may block the entire app
-  const isBlocked = await _startupVersionCheck();
-  if (isBlocked) return; // App is blocked, do not initialize
+  // Version check — run in background, don't block startup
+  const versionPromise = _startupVersionCheck();
 
   // License verification check
   const isAuth = await checkAuthStatus();
   if (!isAuth) {
     showLicenseModal();
+    // 记住密码：自动填充并尝试自动登录
+    if (localStorage.getItem('remember_me') === 'true') {
+      const savedUser = localStorage.getItem('saved_username');
+      const savedPass = localStorage.getItem('saved_password');
+      if (savedUser && savedPass) {
+        document.getElementById('license-user-input').value = savedUser;
+        document.getElementById('license-pass-input').value = savedPass;
+        document.getElementById('remember-me-checkbox').checked = true;
+        await verifyLicenseUser();
+      }
+    }
     return; // Wait for license verification
   }
 
   appMode = localStorage.getItem('app_mode') || 'github';
+  MAX_CONCURRENT_LOADS = (appMode === 'local') ? 12 : 3;
   localCustomPath = localStorage.getItem('local_custom_path') || 'D:\\ERS-Tech-ISP-Images';
   localPreviewMode = false;
   pendingLocalChanges = false;
   setSyncNotice('', false);
 
-  document.getElementById('setting-mode').value = appMode;
+  document.querySelectorAll('input[name="work-mode"]').forEach(function(r) { r.checked = (r.value === appMode); });
   document.getElementById('setting-local-path').value = localCustomPath;
 
   var savedTheme = localStorage.getItem('theme') || 'default';
@@ -1450,7 +1482,11 @@ async function init() {
 async function getImageUrl(brand, model, file) {
   if (appMode === 'local' || localPreviewMode) {
     try {
-      return await invoke('read_image_base64_from_path', { basePath: localBaseDir, brand, model, file });
+      const cacheKey = `local_${brand}/${model}/${file}`;
+      if (localImageCache[cacheKey]) return localImageCache[cacheKey];
+      const promise = invoke('read_image_base64_from_path', { basePath: localBaseDir, brand, model, file });
+      localImageCache[cacheKey] = promise;
+      return await promise;
     } catch (e) {
       console.error(e);
       return 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="200" height="140"><rect fill="%23161b22" width="200" height="140"/><text fill="%238b949e" font-size="12" x="50%" y="50%" text-anchor="middle" dominant-baseline="middle">加载失败</text></svg>';
@@ -1463,7 +1499,7 @@ async function getImageUrl(brand, model, file) {
     const m = encodeURIComponent(model);
     const f = encodeURIComponent(file);
     const url = `${getCdnBase(brand)}/${b}/${m}/${f}`;
-    const fallbackUrl = `https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP-Images/main/${b}/${m}/${f}`;
+    const fallbackUrl = `https://raw.githubusercontent.com/bavenbaven/Software-Releases/main/ERS-TECH-ISP短接宝典/${b}/${m}/${f}`;
     
     const promise = fetch(url).then(async res => {
       if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -2232,6 +2268,8 @@ window.addEventListener('resize', () => {
 
 function openSettingsModal() {
   document.getElementById('settings-modal').classList.add('show');
+  var radios = document.querySelectorAll('input[name="work-mode"]');
+  radios.forEach(function(r) { r.checked = (r.value === appMode); });
   toggleModeFields();
   _settingsShowVersion();
 }
@@ -2241,13 +2279,32 @@ function closeSettingsModal() {
 }
 
 function toggleModeFields() {
-  const mode = document.getElementById('setting-mode').value;
+  const checked = document.querySelector('input[name="work-mode"]:checked');
+  const mode = checked ? checked.value : 'github';
   document.getElementById('local-fields').style.display = mode === 'local' ? 'block' : 'none';
   document.getElementById('github-fields').style.display = mode === 'github' ? 'block' : 'none';
+  _updateModeRadioStyle();
+}
+function _updateModeRadioStyle() {
+  const checked = document.querySelector('input[name="work-mode"]:checked');
+  const val = checked ? checked.value : 'github';
+  document.querySelectorAll('input[name="work-mode"]').forEach(function(r) {
+    var lbl = r.closest('label');
+    if (lbl) {
+      if (r.value === val) {
+        lbl.style.borderColor = 'var(--accent)';
+        lbl.style.background = 'rgba(94,175,255,.12)';
+      } else {
+        lbl.style.borderColor = 'var(--border)';
+        lbl.style.background = 'rgba(255,255,255,.03)';
+      }
+    }
+  });
 }
 
 function saveSettings() {
-  const mode = document.getElementById('setting-mode').value;
+  const checked = document.querySelector('input[name="work-mode"]:checked');
+  const mode = checked ? checked.value : 'github';
   const newLocalPath = document.getElementById('setting-local-path').value.trim();
   const cdnNode = document.getElementById('setting-cdn').value;
 
@@ -2256,6 +2313,7 @@ function saveSettings() {
   localStorage.setItem('cdn_node', cdnNode);
   
   appMode = mode;
+  MAX_CONCURRENT_LOADS = (mode === 'local') ? 12 : 3;
   localCustomPath = newLocalPath;
   ghBlobCache = {};
   

@@ -135,6 +135,25 @@ fn read_image_base64_from_path(base_path: String, brand: String, model: String, 
     Ok(format!("data:{};base64,{}", mime, b64))
 }
 
+#[tauri::command]
+fn read_images_batch(base_path: String, items: Vec<(String, String, String)>) -> Result<Vec<(String, String)>, String> {
+    let base = PathBuf::from(&base_path);
+    let mut results = Vec::with_capacity(items.len());
+    for (brand, model, file) in items {
+        let path = base.join(&brand).join(&model).join(&file);
+        if !path.exists() { continue; }
+        let bytes = std::fs::read(&path).map_err(|e| format!("读取失败: {}", e))?;
+        let ext = path.extension().and_then(|e| e.to_str()).map(|e| e.to_lowercase()).unwrap_or_else(|| "jpg".to_string());
+        let mime = match ext.as_str() {
+            "png" => "image/png", "gif" => "image/gif", "webp" => "image/webp",
+            "bmp" => "image/bmp", "svg" => "image/svg+xml", _ => "image/jpeg",
+        };
+        let b64 = base64::engine::general_purpose::STANDARD.encode(&bytes);
+        results.push((format!("{}|{}|{}", brand, model, file), format!("data:{};base64,{}", mime, b64)));
+    }
+    Ok(results)
+}
+
 // Helper to get local annotation path
 fn get_annotation_path(brand: &str, model: &str, file: &str) -> Result<PathBuf, String> {
     let base = get_base_dir()?;
@@ -601,7 +620,7 @@ async fn sync_to_github(base_path: Option<String>) -> Result<SyncResult, String>
     }
 
     // CDN purge — best effort, errors ignored
-    let cdn_purge_base = "https://purge.jsdelivr.net/gh/bavenbaven/ERS-Tech-ISP-Images@main";
+    let cdn_purge_base = "https://purge.jsdelivr.net/gh/bavenbaven/Software-Releases@main";
     for file in &["metadata.json", "versions.json"] {
         let url = format!("{}/{}", cdn_purge_base, file);
         let _ = ureq::get(&url).call();
@@ -661,10 +680,10 @@ fn close_app(app_handle: tauri::AppHandle) {
 
 // ── Auth / License Constants ──────────────────────────────────────────────────
 
-const GITHUB_REPO: &str = "bavenbaven/ERS-Tech-ISP-Images";
+const GITHUB_REPO: &str = "bavenbaven/Software-Releases";
 const AUTH_JSON_URLS: &[&str] = &[
-        "https://cdn.jsdelivr.net/gh/bavenbaven/ERS-Tech-ISP-Images@main/auth.json",
-        "https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP-Images/main/auth.json",
+    "https://cdn.jsdelivr.net/gh/bavenbaven/Software-Releases@main/auth.json",
+    "https://raw.githubusercontent.com/bavenbaven/Software-Releases/main/auth.json",
 ];
 
 async fn fetch_auth_json(app_handle: &tauri::AppHandle) -> Result<String, String> {
@@ -694,11 +713,11 @@ async fn fetch_auth_json(app_handle: &tauri::AppHandle) -> Result<String, String
             }
         }
     }
-    // 3. NSIS 安装目录（exe_dir/../../auth.json）
+    // 3. NSIS 安装目录（exe_dir/../auth.json）
     if let Ok(exe_path) = std::env::current_exe() {
         if let Some(exe_dir) = exe_path.parent() {
-            if let Some(install_dir) = exe_dir.parent() {
-                let local_path = install_dir.join("auth.json");
+            if let Some(parent_dir) = exe_dir.parent() {
+                let local_path = parent_dir.join("auth.json");
                 if local_path.exists() {
                     if let Ok(text) = std::fs::read_to_string(&local_path) {
                         let clean = text.trim_start_matches('\u{feff}');
@@ -724,7 +743,7 @@ async fn fetch_auth_json(app_handle: &tauri::AppHandle) -> Result<String, String
     }
     // 5. 远程获取
     let client = reqwest::Client::builder()
-        .timeout(std::time::Duration::from_secs(10))
+        .timeout(std::time::Duration::from_secs(5))
         .build()
         .map_err(|e| format!("创建请求失败: {}", e))?;
     for url in AUTH_JSON_URLS {
@@ -786,17 +805,32 @@ async fn verify_license(
             }
             format!("{}:{}", u, hash)
         }
-        _ => return Err("Invalid input".to_string()),
+        _ => {
+            return Err("Invalid input".to_string());
+        }
     };
 
     if success {
         *state.unlocked.lock().unwrap() = true;
-        let app_dir = app_handle
-            .path()
-            .app_data_dir()
-            .unwrap_or_else(|_| std::path::PathBuf::from("."));
-        let _ = std::fs::create_dir_all(&app_dir);
-        let _ = std::fs::write(app_dir.join("auth.key"), hash_input);
+        // Write auth.key to app_data_dir, with fallback to exe_dir
+        let written = if let Ok(app_dir) = app_handle.path().app_data_dir() {
+            let _ = std::fs::create_dir_all(&app_dir);
+            let key_path = app_dir.join("auth.key");
+            std::fs::write(&key_path, &hash_input)
+                .map(|_| true)
+                .unwrap_or(false)
+        } else {
+            false
+        };
+        if !written {
+            // Fallback: write next to exe
+            if let Ok(exe_path) = std::env::current_exe() {
+                if let Some(exe_dir) = exe_path.parent() {
+                    let fallback = exe_dir.join("auth.key");
+                    let _ = std::fs::write(&fallback, &hash_input);
+                }
+            }
+        }
         Ok(true)
     } else {
         Err("Authentication failed".to_string())
@@ -817,7 +851,19 @@ async fn check_auth_status(
         .unwrap_or_else(|_| std::path::PathBuf::from("."));
     let key_path = app_dir.join("auth.key");
     if !key_path.exists() {
-        return Ok(false);
+        // Try fallback next to exe and copy to app_data_dir
+        if let Ok(exe_path) = std::env::current_exe() {
+            if let Some(exe_dir) = exe_path.parent() {
+                let fallback = exe_dir.join("auth.key");
+                if let Ok(content) = std::fs::read_to_string(&fallback) {
+                    let _ = std::fs::create_dir_all(&app_dir);
+                    let _ = std::fs::write(&key_path, &content);
+                }
+            }
+        }
+        if !key_path.exists() {
+            return Ok(false);
+        }
     }
     let saved_hash = std::fs::read_to_string(&key_path).unwrap_or_default();
 
@@ -911,7 +957,10 @@ fn xor_decrypt_text(encoded: String) -> Result<String, String> {
 
 // ── Online Update ────────────────────────────────────────────────────────────
 
-const VERSIONS_JSON_URL: &str = "https://raw.githubusercontent.com/bavenbaven/ERS-Tech-ISP-Images/main/versions.json";
+const VERSIONS_JSON_URLS: &[&str] = &[
+    "https://cdn.jsdelivr.net/gh/bavenbaven/Software-Releases@main/versions.json",
+    "https://raw.githubusercontent.com/bavenbaven/Software-Releases/main/versions.json",
+];
 
 fn get_current_version() -> String {
     // Embedded at compile time from Cargo.toml
@@ -944,12 +993,23 @@ struct VersionCheckResult {
 
 #[tauri::command]
 fn fetch_versions_json() -> Result<String, String> {
-    let resp = ureq::get(VERSIONS_JSON_URL)
-        .set("User-Agent", "ERS-Tech-ISP-Updater")
-        .call()
-        .map_err(|e| format!("获取版本信息失败: {}", e))?;
-    resp.into_string()
-        .map_err(|e| format!("读取版本信息失败: {}", e))
+    let mut last_err = String::new();
+    for url in VERSIONS_JSON_URLS {
+        match ureq::get(url)
+            .set("User-Agent", "ERS-Tech-ISP-Updater")
+            .timeout(std::time::Duration::from_secs(5))
+            .call()
+        {
+            Ok(resp) => {
+                return resp.into_string()
+                    .map_err(|e| format!("读取版本信息失败: {}", e));
+            }
+            Err(e) => {
+                last_err = format!("{}: {}", url, e);
+            }
+        }
+    }
+    Err(format!("所有版本源均失败: {}", last_err))
 }
 
 #[tauri::command]
@@ -1056,6 +1116,7 @@ pub fn run() {
             get_metadata_from_path,
             read_image_base64,
             read_image_base64_from_path,
+            read_images_batch,
             save_annotation,
             load_annotation,
             baidu_get_auth_url,
