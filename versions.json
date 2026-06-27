@@ -1,7 +1,12 @@
 {
-  "latest": "3.1.0",
+  "latest": "3.2.0",
   "min_version": "0.3.0",
   "versions": [
+    {
+      "version": "3.2.0",
+      "url": "https://github.com/bavenbaven/ERS-TECH-ISP-PICTURES-ONLY/releases/download/3.2.0/ERS.Tech.ISP._3.2.0_x64-setup.exe",
+      "changelog": "v3.2.0 更新内容：\n- 分离图片仓库与代码仓库\n- 图片迁移到公开仓库\n- 优化同步逻辑\n- 修复登录验证\n- 本地图片加载优化"
+    },
     {
       "version": "3.1.0",
       "url": "https://github.com/bavenbaven/Software-Releases/releases/download/v3.1.0/ERS_Tech_ISP_3.1.0_x64-setup.exe",

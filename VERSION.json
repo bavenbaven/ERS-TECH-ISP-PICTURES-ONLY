@@ -1,11 +1,11 @@
 {
-  "version": "3.1.0",
-  "pub_date": "2026-06-21T05:50:00Z",
-  "notes": "[MIN_VERSION:0.3.0] ERS Tech ISP v3.1.0",
+  "version": "3.2.0",
+  "pub_date": "2026-06-27T14:30:00Z",
+  "notes": "[MIN_VERSION:0.3.0] ERS Tech ISP v3.2.0",
   "platforms": {
     "windows-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IEVSUyBUZWNoIElTUCBTaG9ydC1Db25uZWN0IHYzLjEuMApwaUlja0txeDlrNnlUMTZURVhFSFEzYTgrd2VYemhmWUpqSmUrampKM0loU0l1eVNmWkEvL1FJLzVURkcvNnRGaDNUQ1Fzc0pnVDVpVkFkZ3pnNEJvU0I5NDF4eVZxRTh0VjdhcjJpSWNSK2ZnZytpSUFuYXl4YkI2eHlYU3oxTHp1CnRydXN0ZWQgY29tbWVudDogRVJTIFRlY2ggSVNQIHYzLjEuMApuZzBWamJBR3JwMXdsM2dMNFY2U2Z4YWdCOVlxVkk5S3BZQUFPcEhtV1FucWlZQjFqYjJmUzRxMEVDdE12NWU2anluRHBjeXU0Njhtb0g5b0JBPT0K",
-      "url": "https://github.com/bavenbaven/Software-Releases/releases/download/v3.1.0/ERS_Tech_ISP_3.1.0_x64-setup.exe"
+      "signature": "",
+      "url": "https://github.com/bavenbaven/ERS-TECH-ISP-PICTURES-ONLY/releases/download/3.2.0/ERS.Tech.ISP._3.2.0_x64-setup.exe"
     }
   }
 }
