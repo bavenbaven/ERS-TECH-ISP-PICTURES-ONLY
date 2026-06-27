@@ -1,0 +1,191 @@
+name: Sync to Gitee (Split Repositories)
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch: # Allows manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout GitHub Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+
+      - name: Setup Gitee SSH Key
+        id: ssh-setup
+        env:
+          GITEE_TOKEN: 3aa6805ac2cb4a4fc4e565ebc19c5c78
+        run: |
+          # 1. Generate SSH key pair
+          ssh-keygen -t ed25519 -C "github-action-sync" -N "" -f /tmp/id_ed25519
+          
+          # 2. Add public key to Gitee
+          PUB_KEY=$(cat /tmp/id_ed25519.pub)
+          RESPONSE=$(curl -s -X POST -H "Content-Type: application/json" -d "{\"access_token\":\"$GITEE_TOKEN\",\"title\":\"GH_Action_Sync\",\"key\":\"$PUB_KEY\"}" https://gitee.com/api/v5/user/keys)
+          KEY_ID=$(echo "$RESPONSE" | python -c "import sys, json; print(json.load(sys.stdin).get('id', ''))")
+          
+          if [ -z "$KEY_ID" ]; then
+            echo "Failed to register SSH key on Gitee! Response: $RESPONSE"
+            exit 1
+          fi
+          
+          echo "Gitee SSH key registered with ID: $KEY_ID"
+          echo "$KEY_ID" > /tmp/gitee_key_id.txt
+          
+          # 3. Configure SSH client on runner
+          mkdir -p ~/.ssh
+          cp /tmp/id_ed25519 ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan gitee.com >> ~/.ssh/known_hosts
+
+      - name: Split and Sync to Gitee
+        env:
+          GITEE_USER: bavenbaven
+        run: |
+          # Create temporary directory for Gitee repos
+          mkdir -p /tmp/gitee_repos
+          
+          # Helper function to push in small batches (5MB) using SSH
+          push_in_batches() {
+            local repo_path="$1"
+            local remote_url="$2"
+            local repo_name="$3"
+            
+            echo "Starting batch sync for $repo_name at $repo_path using SSH"
+            cd "$repo_path"
+            git init
+            git checkout -b master
+            git remote add gitee "$remote_url"
+            
+            local batch_size_limit=$((5 * 1024 * 1024)) # 5MB batches
+            local current_batch_size=0
+            local batch_files=()
+            local batch_count=1
+            
+            # Find all files recursively (excluding .git and .exe)
+            find . -type f ! -path '*/.git*' ! -name '*.exe' > /tmp/file_list.txt
+            
+            while IFS= read -r file; do
+              [ -f "$file" ] || continue
+              local file_size=$(stat -c%s "$file")
+              batch_files+=("$file")
+              current_batch_size=$((current_batch_size + file_size))
+              
+              if [ $current_batch_size -ge $batch_size_limit ]; then
+                echo "=== $repo_name Batch $batch_count ($((current_batch_size / 1024 / 1024)) MB, ${#batch_files[@]} files) ==="
+                for bf in "${batch_files[@]}"; do
+                  git add "$bf"
+                done
+                git commit -m "batch $batch_count"
+                
+                if [ $batch_count -eq 1 ]; then
+                  echo "Pushing batch $batch_count (force)..."
+                  git push gitee master --force
+                else
+                  echo "Pushing batch $batch_count..."
+                  git push gitee master
+                fi
+                echo "Batch $batch_count pushed successfully. Sleeping 5s to avoid rate limiting..."
+                sleep 5
+                
+                batch_files=()
+                current_batch_size=0
+                batch_count=$((batch_count + 1))
+              fi
+            done < /tmp/file_list.txt
+            
+            # Push remaining files
+            if [ ${#batch_files[@]} -gt 0 ]; then
+              echo "=== $repo_name Final Batch $batch_count ($((current_batch_size / 1024 / 1024)) MB, ${#batch_files[@]} files) ==="
+              for bf in "${batch_files[@]}"; do
+                git add "$bf"
+              done
+              git commit -m "batch $batch_count"
+              
+              if [ $batch_count -eq 1 ]; then
+                echo "Pushing final batch $batch_count (force)..."
+                git push gitee master --force
+              else
+                echo "Pushing final batch $batch_count..."
+                git push gitee master
+              fi
+              echo "Final batch $batch_count pushed successfully. Sleeping 5s to avoid rate limiting..."
+              sleep 5
+            elif [ $batch_count -eq 1 ]; then
+              echo "Empty repository $repo_name, pushing dummy file"
+              echo "empty" > readme.md
+              git add readme.md
+              git commit -m "initial empty"
+              git push gitee master --force
+              echo "Dummy push completed. Sleeping 5s..."
+              sleep 5
+            fi
+          }
+          
+          # 1. Process repo0 (Root metadata files only, no .exe)
+          mkdir -p /tmp/gitee_repos/repo0
+          for file in catalog.json index.html metadata.json metadata.json.bak; do
+            if [ -f "$file" ]; then
+              cp "$file" /tmp/gitee_repos/repo0/
+            fi
+          done
+          
+          push_in_batches "/tmp/gitee_repos/repo0" "git@gitee.com:$GITEE_USER/ers-tech-isp-images.git" "repo0"
+          
+          # 2. Process repo1 to repo5 (Brand directories)
+          cd $GITHUB_WORKSPACE
+          
+          # Map function to determine target repository
+          get_target_repo() {
+            local brand="$1"
+            case "$brand" in
+              "SAMSUNG") echo "repo1" ;;
+              "HUAWEI"|"VIVO"|"XIAOMI") echo "repo2" ;;
+              "OPPO"|"LG"|"OTHERS"|"MOTO"|"REALME"|"SONY"|"NOKIA") echo "repo3" ;;
+              "HONOR"|"ZTE"|"HTC"|"LENOVO"|"ASUS"|"TECNO"|"INFINIX") echo "repo4" ;;
+              *) echo "repo5" ;;
+            esac
+          }
+          
+          # Iterate over directories and copy them to their mapped repositories
+          for dir in */; do
+            brand="${dir%/}"
+            if [[ "$brand" != .* && "$brand" != _* && -d "$brand" ]]; then
+              repo=$(get_target_repo "$brand")
+              echo "Mapping $brand to $repo"
+              mkdir -p /tmp/gitee_repos/$repo
+              cp -r "$brand" /tmp/gitee_repos/$repo/
+            fi
+          done
+          
+          # Process repo1 to repo5
+          for i in {1..5}; do
+            repo_path="/tmp/gitee_repos/repo$i"
+            mkdir -p "$repo_path"
+            remote_url="git@gitee.com:$GITEE_USER/ers-tech-isp-images-$i.git"
+            push_in_batches "$repo_path" "$remote_url" "repo$i"
+          done
+
+      - name: Cleanup Gitee SSH Key
+        if: always()
+        env:
+          GITEE_TOKEN: 3aa6805ac2cb4a4fc4e565ebc19c5c78
+        run: |
+          if [ -f /tmp/gitee_key_id.txt ]; then
+            KEY_ID=$(cat /tmp/gitee_key_id.txt)
+            if [ ! -z "$KEY_ID" ]; then
+              echo "Deleting temporary SSH key from Gitee with ID: $KEY_ID"
+              curl -s -X DELETE "https://gitee.com/api/v5/user/keys/$KEY_ID?access_token=$GITEE_TOKEN"
+            fi
+          else
+            echo "No SSH key ID found to cleanup."
+          fi

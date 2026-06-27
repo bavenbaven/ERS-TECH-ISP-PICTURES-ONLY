@@ -1,0 +1,39 @@
+name: Sync ISP Images to Software-Releases
+on:
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout private repo (ERS-Tech-ISP-Images)
+        uses: actions/checkout@v4
+        with:
+          path: private
+
+      - name: Checkout public repo (Software-Releases)
+        uses: actions/checkout@v4
+        with:
+          repository: bavenbaven/Software-Releases
+          token: ${{ secrets.SYNC_PAT }}
+          path: public
+
+      - name: Move ISP images into subfolder
+        run: |
+          cd public
+          git config user.name "bavenbaven"
+          git config user.email "bavenbaven@users.noreply.github.com"
+
+          mkdir -p "ERS-TECH-ISP短接宝典"
+          rsync -av --exclude='.git' ../private/ "ERS-TECH-ISP短接宝典/"
+
+      - name: Commit and push to public repo
+        run: |
+          cd public
+          git add "ERS-TECH-ISP短接宝典/"
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "Add ISP images: 87 brands, 4949 files"
+            git push
+          fi

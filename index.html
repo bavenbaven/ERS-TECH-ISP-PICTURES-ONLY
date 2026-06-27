@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+<title>ERS Tech ISP短接宝典</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0e14;--bg2:#0d1117;--card:#151c24;--border:#2d3747;--accent:#4fc3f7;--accent2:#e94560;--text:#e1e7ef;--text2:#8899aa;--hover:#1a2332;--glow:rgba(79,195,247,.15)}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:linear-gradient(135deg,#0a0e14 0%,#111922 50%,#0d1117 100%);color:var(--text);height:100vh;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100vh}
+header{display:flex;align-items:center;gap:16px;padding:10px 20px;background:rgba(21,28,36,.85);backdrop-filter:blur(12px);border-bottom:1px solid var(--border);flex-shrink:0;position:relative;z-index:10}
+header::after{content:'';position:absolute;bottom:-1px;left:5%;right:5%;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:.3}
+header h1{font-size:18px;white-space:nowrap;background:linear-gradient(135deg,#4fc3f7,#e94560,#ffb74d);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700;letter-spacing:.5px}
+header input{flex:1;max-width:500px;padding:8px 14px;border:1px solid var(--border);border-radius:8px;background:var(--bg);color:var(--text);font-size:14px;outline:none;transition:all .2s}
+header input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--glow)}
+header .stats{font-size:12px;color:var(--text2);white-space:nowrap}
+/* Quick-link cards */
+#v-toolbar .ql-btn{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;border-radius:6px;text-decoration:none;color:var(--text);border:1px solid var(--border);font-size:12px;font-weight:500;transition:all .15s}
+#v-toolbar .ql-btn:hover{color:#fff;border-color:var(--accent);box-shadow:0 0 10px var(--glow)}
+#body{display:flex;flex:1;overflow:hidden}
+#sidebar{width:220px;min-width:220px;background:rgba(21,28,36,.7);backdrop-filter:blur(8px);border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0}
+#sidebar .brand{display:flex;align-items:center;gap:8px;padding:8px 14px;cursor:pointer;font-size:13px;color:var(--text2);transition:all .15s;border-left:3px solid transparent}
+#sidebar .brand:hover{background:var(--hover);color:var(--text)}
+#sidebar .brand.active{background:var(--hover);color:var(--accent);border-left-color:var(--accent)}
+#sidebar .brand .count{font-size:11px;color:var(--text2);margin-left:auto}
+#sidebar .brand .arrow{font-size:10px;transition:transform .2s;width:14px;text-align:center}
+#sidebar .brand .arrow.open{transform:rotate(90deg)}
+#sidebar .model{display:flex;align-items:center;gap:6px;padding:5px 14px 5px 28px;cursor:pointer;font-size:12px;color:var(--text2);transition:all .1s}
+#sidebar .model:hover{background:var(--hover);color:var(--text)}
+#sidebar .model.active{color:var(--accent)}
+#sidebar .model .icon{font-size:10px;opacity:.5}
+#main{flex:1;overflow-y:auto;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px}
+.card{border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:all .25s;background:var(--card);position:relative}
+.card::after{content:'';position:absolute;inset:0;border-radius:10px;opacity:0;transition:opacity .3s;background:linear-gradient(135deg,transparent 60%,rgba(79,195,247,.03))}
+.card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 8px 30px rgba(0,0,0,.4),0 0 15px var(--glow)}
+.card:hover::after{opacity:1}
+.card .thumb{width:100%;height:140px;object-fit:cover;display:block;background:var(--bg2)}
+.card .info{padding:8px 10px;position:relative;z-index:1}
+.card .info .model-name{font-size:12px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.card .info .file-name{font-size:11px;color:var(--text2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+.empty-state{display:flex;align-items:center;justify-content:center;height:60vh;color:var(--text2);font-size:16px;flex-direction:column;gap:8px}
+.empty-state .big{font-size:48px}
+
+/* Viewer */
+#viewer{display:flex;flex-direction:column;height:100%}
+#v-toolbar{display:flex;align-items:center;gap:6px;padding:8px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:8px;flex-shrink:0;flex-wrap:wrap}
+#v-toolbar .v-title{font-size:13px;color:var(--text2);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:right}
+#v-toolbar button{background:var(--bg);border:1px solid var(--border);color:var(--text);padding:4px 10px;border-radius:5px;cursor:pointer;font-size:12px;transition:all .15s}
+#v-toolbar button:hover{background:var(--hover);border-color:var(--accent);box-shadow:0 0 10px var(--glow)}
+#v-toolbar button.active{background:var(--accent);color:#0a0e14;border-color:var(--accent);font-weight:600}
+#v-toolbar .back-btn{border-color:#e94560;color:#e94560}
+#v-toolbar .back-btn:hover{background:#e94560;color:#fff;box-shadow:0 0 10px rgba(233,69,96,.3)}
+#v-toolbar .nav-btn{font-size:13px;padding:4px 14px}
+#v-toolbar .sep{width:1px;height:20px;background:var(--border);margin:0 2px}
+#v-body{flex:1;display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative;border:1px solid var(--border);border-radius:8px;background:radial-gradient(ellipse at center,#1a2332 0%,#000 100%)}
+#v-body img{max-width:100%;max-height:100%;object-fit:contain;transition:transform .2s;user-select:none;-webkit-user-drag:none}
+#v-body canvas{position:absolute;cursor:crosshair;pointer-events:none;left:50%;top:50%;transform:translate(-50%,-50%)}
+#v-body canvas.active{pointer-events:all}
+#v-body canvas.edit-mode{cursor:default}
+.v-nav-overlay{position:absolute;top:0;bottom:0;width:120px;display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;color:rgba(255,255,255,.6);font-size:64px;font-weight:bold;transition:all .25s;user-select:none;background:rgba(0,0,0,.15)}
+.v-nav-overlay:hover{color:#fff;background:rgba(0,0,0,.45);transform:scale(1.05)}
+.v-nav-overlay.left{left:0;border-radius:0 12px 12px 0}
+.v-nav-overlay.right{right:0;border-radius:12px 0 0 12px}
+.v-nav-overlay.disabled{opacity:.25;pointer-events:none}
+.v-zoom-badge{position:absolute;bottom:16px;right:16px;background:rgba(0,0,0,.75);backdrop-filter:blur(4px);color:#fff;padding:4px 10px;border-radius:6px;font-size:12px;z-index:5;pointer-events:none;opacity:0;transition:opacity .3s}
+.v-zoom-badge.show{opacity:1}
+#v-info{display:flex;align-items:center;gap:12px;padding:6px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-top:6px;font-size:12px;color:var(--text2);flex-shrink:0;flex-wrap:wrap}
+#v-info .tag{background:var(--bg);padding:2px 8px;border-radius:4px;border:1px solid var(--border)}
+
+/* Annotation tools */
+#annot-tools{display:none;gap:6px;align-items:center;padding:4px 12px;background:var(--card);border:1px solid var(--border);border-radius:8px;margin-bottom:6px;flex-shrink:0;flex-wrap:wrap}
+#annot-tools.show{display:flex}
+#annot-tools .tool-btn{width:34px;height:34px;display:flex;align-items:center;justify-content:center;border:1px solid var(--border);border-radius:6px;background:var(--bg);color:var(--text);cursor:pointer;font-size:15px;transition:all .15s}
+#annot-tools .tool-btn:hover{background:var(--hover);border-color:var(--accent)}
+#annot-tools .tool-btn.active{background:var(--accent);color:#0a0e14;border-color:var(--accent)}
+#annot-tools .tool-btn.edit-active{background:#e94560;color:#fff;border-color:#e94560}
+#annot-tools input[type=color]{width:34px;height:34px;border:1px solid var(--border);border-radius:6px;background:var(--card);cursor:pointer;padding:2px}
+#annot-tools input[type=range]{width:60px;accent-color:var(--accent)}
+#annot-tools .annot-label{font-size:11px;color:var(--text2)}
+
+/* Scrollbar styling */
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:var(--text2)}
+
+/* Responsive */
+@media(max-width:768px){#sidebar{width:180px;min-width:180px}.grid{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}}
+@media(max-width:480px){header h1{font-size:14px}#sidebar{display:none}.grid{grid-template-columns:repeat(auto-fill,minmax(120px,1fr))}}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>ERS Tech ISP短接宝典</h1>
+    <input id="search" type="text" placeholder="全局搜索 品牌/型号/文件名...">
+    <span class="stats" id="stats">加载中...</span>
+  </header>
+  <div id="body">
+    <div id="sidebar"></div>
+    <div id="main">
+      <div class="empty-state" id="empty">
+        <div class="big">📱</div>
+        <div>选择一个品牌开始浏览</div>
+      </div>
+      <div class="grid" id="grid" style="display:none"></div>
+      <div id="viewer" style="display:none">
+<div id="v-toolbar">
+<a class="ql-btn" href="https://shopee.ph/ers.tech" target="_blank" rel="noopener" title="Shopee ERS Tech 官方店铺" style="border-color:#ee4d2d;color:#ee4d2d;font-weight:700">🛒 Shopee</a>
+<a class="ql-btn" href="https://www.tiktok.com/@ers.tech" target="_blank" rel="noopener" title="TikTok @ers.tech" style="border-color:#000;color:#fff;font-weight:700;background:#000">🎵 TikTok</a>
+<span class="sep"></span>
+<button class="back-btn" onclick="closeViewer()">← 返回网格</button>
+<span class="sep"></span>
+<button onclick="toggleAnnot()" id="v-annot-btn" title="Annotate">✏️ 标注</button>
+<button onclick="clearAnnot()" title="Clear Annotations">🗑️ 清除</button>
+<button onclick="undoAnnot()" title="Delete Last Stroke">↩️ 撤销</button>
+<button onclick="zoomIn()" title="Zoom In">🔍+</button>
+<button onclick="zoomOut()" title="Zoom Out">🔍−</button>
+<button onclick="resetView()" title="Reset Zoom">🔄</button>
+<button onclick="openImageInNewTab()" title="Open in new tab" style="font-size:16px;padding:2px 6px">↗</button>
+</div>
+<div id="annot-tools">
+  <button class="tool-btn active" data-tool="free" onclick="setTool('free')" title="自由画笔">✏️</button>
+  <button class="tool-btn" data-tool="arrow" onclick="setTool('arrow')" title="箭头">➡️</button>
+  <button class="tool-btn" data-tool="line" onclick="setTool('line')" title="直线">📏</button>
+  <button class="tool-btn" data-tool="rect" onclick="setTool('rect')" title="矩形">⬜</button>
+  <button class="tool-btn" data-tool="circle" onclick="setTool('circle')" title="圆形/椭圆">⭕</button>
+  <button class="tool-btn" data-tool="text" onclick="setTool('text')" title="文字">T</button>
+  <span class="sep"></span>
+  <button class="tool-btn" id="v-edit-btn" onclick="toggleEditMode()" title="编辑模式">👆</button>
+  <button class="tool-btn" onclick="deleteSelected()" title="删除选中" style="color:#e94560">🗑️</button>
+  <span class="sep"></span>
+  <input type="color" value="#ff4444" onchange="setAnnotColor(this.value)" title="颜色">
+  <input type="range" min="1" max="10" value="3" onchange="setAnnotSize(Number(this.value))" title="粗细">
+  <span class="annot-label">粗细</span>
+  <span id="v-edit-status" style="font-size:11px;color:#e94560;display:none">编辑中: 点击标注选中, 方向键移动, Delete删除</span>
+</div>
+<div id="v-filename" style="text-align:center;padding:6px 12px;font-size:22px;font-weight:700;color:#4fc3f7;letter-spacing:.5px;text-shadow:0 0 12px rgba(79,195,247,.3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+<div id="v-body">
+<img id="v-img" src="" alt=""/>
+<canvas id="v-canvas"></canvas>
+<div class="v-nav-overlay left" id="v-nav-prev" onclick="prevImage()"><span style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:72px;line-height:1">◀</span><span style="font-size:12px;opacity:.7">上一张</span></span></div>
+<div class="v-nav-overlay right" id="v-nav-next" onclick="nextImage()"><span style="display:flex;flex-direction:column;align-items:center;gap:4px"><span style="font-size:72px;line-height:1">▶</span><span style="font-size:12px;opacity:.7">下一张</span></span></div>
+<div class="v-zoom-badge" id="v-zoom-badge">100%</div>
+</div>
+  <div id="v-info">
+    <span class="tag" id="v-brand"></span>
+    <span class="tag" id="v-model"></span>
+    <span class="tag" id="v-file"></span>
+    <span id="v-nav"></span>
+  </div>
+</div>
+
+<script>
+let data = [];
+let filtered = [];
+let currentBrand = null;
+let currentModel = null;
+let searchTerm = '';
+let brandCache = {};
+
+// Viewer state
+let lbIdx = -1;
+let lbItems = [];
+let lbZoom = 1;
+let lbRotate = 0;
+let lbAnnotMode = false;
+let annotColor = '#ff4444';
+let annotSize = 3;
+let annotTool = 'free';
+let annotHistory = [];
+let isDrawing = false;
+let startX, startY;
+let freePoints = null;
+let editMode = false;
+let selectedAnnot = -1;
+
+
+async function init() {
+  try {
+    const resp = await fetch('metadata.json');
+    data = await resp.json();
+    document.getElementById('stats').textContent = `${data.length} 个型号 · ${data.reduce((s, e) => s + e.fileCount, 0)} 张图片`;
+    buildBrandSidebar();
+  } catch (e) {
+    document.getElementById('stats').textContent = '加载失败';
+    document.getElementById('empty').innerHTML = '<div class="big">⚠️</div><div>无法加载 metadata.json</div>';
+  }
+}
+
+function escapeRegExp(s) { return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') }
+
+function buildBrandSidebar(searchOnly) {
+  const sidebar = document.getElementById('sidebar');
+  // Group by brand
+  const brands = {};
+  data.forEach(item => {
+    if (!brands[item.brand]) brands[item.brand] = { models: [], total: 0 };
+    if (!brands[item.brand].models.includes(item.model)) brands[item.brand].models.push(item.model);
+    brands[item.brand].total += item.fileCount;
+  });
+
+  if (searchOnly && searchTerm) {
+    // In search mode, only show matching brands
+    const term = searchTerm.toLowerCase();
+    for (const b in brands) {
+      let hasMatch = false;
+      for (const m of brands[b].models) {
+        if (b.toLowerCase().includes(term) || m.toLowerCase().includes(term)) { hasMatch = true; break }
+        const entry = data.find(d => d.brand === b && d.model === m);
+        if (entry && entry.files.some(f => f.toLowerCase().includes(term))) { hasMatch = true; break }
+      }
+      if (!hasMatch) delete brands[b];
+    }
+  }
+
+  const sorted = Object.keys(brands).sort();
+  brandCache = brands;
+  sidebar.innerHTML = '';
+
+  sorted.forEach(brand => {
+    const b = brands[brand];
+    const isActive = brand === currentBrand;
+    const div = document.createElement('div');
+    div.className = 'brand' + (isActive ? ' active' : '');
+    div.innerHTML = `<span class="arrow ${isActive ? 'open' : ''}">▶</span><span>${brand}</span><span class="count">${b.models.length}</span>`;
+    div.onclick = () => selectBrand(brand);
+    sidebar.appendChild(div);
+
+    if (isActive) {
+      b.models.sort().forEach(model => {
+        const md = document.createElement('div');
+        md.className = 'model' + (model === currentModel ? ' active' : '');
+        const entry = data.find(d => d.brand === brand && d.model === model);
+        const fc = entry ? entry.fileCount : 0;
+        md.innerHTML = `<span class="icon">📄</span>${model} <span class="count">${fc}</span>`;
+        md.onclick = (e) => { e.stopPropagation(); selectModel(brand, model) };
+        sidebar.appendChild(md);
+      });
+    }
+  });
+}
+
+function selectBrand(brand) {
+  if (brand === currentBrand) {
+    currentBrand = null;
+    currentModel = null;
+    closeViewer();
+    document.getElementById('grid').style.display = 'none';
+    document.getElementById('empty').style.display = 'flex';
+    document.getElementById('empty').innerHTML = '<div class="big">📱</div><div>选择一个品牌开始浏览</div>';
+    buildBrandSidebar(!!searchTerm);
+    return;
+  }
+  currentBrand = brand;
+  currentModel = null;
+  const b = brandCache[brand];
+  if (b && b.models.length > 0) {
+    selectModel(brand, b.models.sort()[0]);
+  }
+  buildBrandSidebar(!!searchTerm);
+}
+
+function selectModel(brand, model) {
+  closeViewer();
+  currentBrand = brand;
+  currentModel = model;
+  renderGrid(brand, model);
+  buildBrandSidebar(!!searchTerm);
+}
+
+function renderGrid(brand, model) {
+  const grid = document.getElementById('grid');
+  const empty = document.getElementById('empty');
+  grid.style.display = 'none';
+  empty.style.display = 'flex';
+
+  let items = [];
+  if (searchTerm) {
+    const term = searchTerm.toLowerCase();
+    const seen = new Set();
+    data.forEach(entry => {
+      const b = entry.brand.toLowerCase();
+      const m = entry.model.toLowerCase();
+      const brandMatch = b.includes(term);
+      const modelMatch = m.includes(term);
+      entry.files.forEach(f => {
+        const fm = f.toLowerCase();
+        if (brandMatch || modelMatch || fm.includes(term)) {
+          const k = `${entry.brand}|${entry.model}|${f}`;
+          if (!seen.has(k)) { seen.add(k); items.push({ brand: entry.brand, model: entry.model, file: f }); }
+        }
+      });
+    });
+  } else if (brand && model) {
+    const entry = data.find(d => d.brand === brand && d.model === model);
+    if (entry) items = entry.files.map(f => ({ brand, model, file: f }));
+  } else if (brand) {
+    data.filter(d => d.brand === brand).forEach(entry => {
+      entry.files.forEach(f => items.push({ brand: entry.brand, model: entry.model, file: f }));
+    });
+  }
+
+  if (items.length === 0) {
+    empty.style.display = 'flex';
+    empty.innerHTML = searchTerm ? `<div class="big">🔍</div><div>未找到匹配 "${searchTerm}"</div>` : '<div class="big">📱</div><div>请选择一个型号</div>';
+    return;
+  }
+
+  empty.style.display = 'none';
+  grid.style.display = 'grid';
+  lbItems = items;
+
+  // Efficient rendering: use document fragment
+  const frag = document.createDocumentFragment();
+  items.forEach((item, idx) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    const path = `${encodeURIComponent(item.brand)}/${encodeURIComponent(item.model)}/${encodeURIComponent(item.file)}`;
+    card.innerHTML = `<img class="thumb" loading="lazy" src="${path}" alt="${item.file}" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22200%22 height=%22140%22><rect fill=%22%23161b22%22 width=%22200%22 height=%22140%22/><text fill=%22%238b949e%22 font-size=%2212%22 x=%2250%25%22 y=%2250%25%22 text-anchor=%22middle%22 dominant-baseline=%22middle%22>加载失败</text></svg>'">
+      <div class="info"><div class="model-name">${item.model}</div><div class="file-name">${item.file}</div></div>`;
+    card.onclick = () => openViewer(idx);
+    frag.appendChild(card);
+  });
+  grid.innerHTML = '';
+  grid.appendChild(frag);
+}
+
+// Search
+document.getElementById('search').addEventListener('input', function() {
+  searchTerm = this.value.trim();
+  if (searchTerm) {
+    currentBrand = null;
+    currentModel = null;
+    buildBrandSidebar(true);
+    // Collect all matching items
+    const term = searchTerm.toLowerCase();
+    const seen = new Set();
+    const items = [];
+    data.forEach(entry => {
+      const b = entry.brand.toLowerCase();
+      const m = entry.model.toLowerCase();
+      const brandMatch = b.includes(term);
+      const modelMatch = m.includes(term);
+      entry.files.forEach(f => {
+        const fm = f.toLowerCase();
+        if (brandMatch || modelMatch || fm.includes(term)) {
+          const k = `${entry.brand}|${entry.model}|${f}`;
+          if (!seen.has(k)) { seen.add(k); items.push({ brand: entry.brand, model: entry.model, file: f }); }
+        }
+      });
+    });
+    if (items.length > 0) {
+      lbItems = items;
+      document.getElementById('grid').style.display = 'none';
+      document.getElementById('empty').style.display = 'none';
+      document.getElementById('viewer').style.display = 'flex';
+      openViewer(0);
+    } else {
+      document.getElementById('grid').style.display = 'none';
+      document.getElementById('viewer').style.display = 'none';
+      document.getElementById('empty').style.display = 'flex';
+      document.getElementById('empty').innerHTML = `<div class="big">🔍</div><div>未找到匹配 "${searchTerm}"</div>`;
+    }
+  } else {
+    searchTerm = '';
+    buildBrandSidebar();
+    document.getElementById('grid').style.display = 'none';
+    document.getElementById('viewer').style.display = 'none';
+    document.getElementById('empty').style.display = 'flex';
+    document.getElementById('empty').innerHTML = '<div class="big">📱</div><div>选择一个品牌开始浏览</div>';
+  }
+});
+
+// Viewer
+function openViewer(idx) {
+  lbIdx = idx;
+  lbZoom = 1;
+  lbRotate = 0;
+  const item = lbItems[idx];
+  if (!item) return;
+  document.getElementById('grid').style.display = 'none';
+  document.getElementById('empty').style.display = 'none';
+  document.getElementById('viewer').style.display = 'flex';
+  document.getElementById('v-brand').textContent = item.brand;
+  document.getElementById('v-model').textContent = item.model;
+  document.getElementById('v-file').textContent = item.file;
+  document.getElementById('v-nav').textContent = `${idx + 1} / ${lbItems.length}`;
+  const img = document.getElementById('v-img');
+  const canvas = document.getElementById('v-canvas');
+  img.style.transform = '';
+  canvas.classList.remove('active');
+  annotHistory = [];
+  lbAnnotMode = false;
+  document.getElementById('v-annot-btn').classList.remove('active');
+  document.getElementById('annot-tools').classList.remove('show');
+  document.getElementById('v-filename').textContent = item.file;
+  updateNavOverlay();
+
+  const setupCanvas = () => {
+    requestAnimationFrame(() => {
+      const rect = img.getBoundingClientRect();
+      canvas.width = img.naturalWidth;
+      canvas.height = img.naturalHeight;
+      canvas.style.width = rect.width + 'px';
+      canvas.style.height = rect.height + 'px';
+      loadAnnotations();
+    });
+  };
+
+  img.onload = setupCanvas;
+  img.src = `${encodeURIComponent(item.brand)}/${encodeURIComponent(item.model)}/${encodeURIComponent(item.file)}`;
+  if (img.complete && img.naturalWidth > 0) { setupCanvas() }
+}
+
+function fitCanvasToScreen() {
+  const img = document.getElementById('v-img');
+  const canvas = document.getElementById('v-canvas');
+  const rect = img.getBoundingClientRect();
+  if (rect.width > 0) {
+    canvas.style.width = rect.width + 'px';
+    canvas.style.height = rect.height + 'px';
+  }
+}
+
+function closeViewer() {
+  document.getElementById('viewer').style.display = 'none';
+  document.getElementById('grid').style.display = '';
+  lbAnnotMode = false;
+  document.getElementById('v-annot-btn').classList.remove('active');
+  document.getElementById('annot-tools').classList.remove('show');
+}
+
+function zoomIn() { lbZoom = Math.min(lbZoom + 0.25, 5); applyTransform() }
+function zoomOut() { lbZoom = Math.max(lbZoom - 0.25, 0.25); applyTransform() }
+function resetView() { lbZoom = 1; lbRotate = 0; applyTransform() }
+function rotateImg(deg) { lbRotate = (lbRotate + deg) % 360; applyTransform() }
+function applyTransform() {
+  document.getElementById('v-img').style.transform = `scale(${lbZoom}) rotate(${lbRotate}deg)`;
+  const badge = document.getElementById('v-zoom-badge');
+  if (badge) {
+    badge.textContent = Math.round(lbZoom * 100) + '%';
+    badge.classList.add('show');
+    clearTimeout(badge._hide);
+    badge._hide = setTimeout(() => badge.classList.remove('show'), 1500);
+  }
+}
+
+function prevImage() {
+  if (!currentBrand || !currentModel) return;
+  const models = (brandCache[currentBrand] && brandCache[currentBrand].models) || [];
+  const sorted = models.slice().sort();
+  const idx = sorted.indexOf(currentModel);
+  if (idx > 0) {
+    const prevModel = sorted[idx - 1];
+    currentModel = prevModel;
+    const entry = data.find(d => d.brand === currentBrand && d.model === prevModel);
+    if (entry && entry.files.length > 0) {
+      lbItems = entry.files.map(f => ({ brand: currentBrand, model: prevModel, file: f }));
+      openViewer(0);
+      updateNavOverlay();
+      buildBrandSidebar(!!searchTerm);
+      scrollSidebarToModel(prevModel);
+    }
+  }
+}
+function nextImage() {
+  if (!currentBrand || !currentModel) return;
+  const models = (brandCache[currentBrand] && brandCache[currentBrand].models) || [];
+  const sorted = models.slice().sort();
+  const idx = sorted.indexOf(currentModel);
+  if (idx < sorted.length - 1) {
+    const nextModel = sorted[idx + 1];
+    currentModel = nextModel;
+    const entry = data.find(d => d.brand === currentBrand && d.model === nextModel);
+    if (entry && entry.files.length > 0) {
+      lbItems = entry.files.map(f => ({ brand: currentBrand, model: nextModel, file: f }));
+      openViewer(0);
+      updateNavOverlay();
+      buildBrandSidebar(!!searchTerm);
+      scrollSidebarToModel(nextModel);
+    }
+  }
+}
+
+function scrollSidebarToModel(modelName) {
+  const models = document.querySelectorAll('#sidebar .model');
+  for (const m of models) {
+    if (m.textContent.includes(modelName)) {
+      m.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      break;
+    }
+  }
+}
+
+function updateNavOverlay() {
+  const prevBtn = document.getElementById('v-nav-prev');
+  const nextBtn = document.getElementById('v-nav-next');
+  if (!currentBrand || !currentModel) return;
+  const models = (brandCache[currentBrand] && brandCache[currentBrand].models) || [];
+  const sorted = models.slice().sort();
+  const idx = sorted.indexOf(currentModel);
+  if (prevBtn) prevBtn.classList.toggle('disabled', idx <= 0);
+  if (nextBtn) nextBtn.classList.toggle('disabled', idx >= sorted.length - 1);
+}
+
+function openImageInNewTab() {
+  const img = document.getElementById('v-img');
+  if (img && img.src) window.open(img.src, '_blank');
+}
+
+// Mousewheel zoom
+document.getElementById('v-body').addEventListener('wheel', e => {
+  if (e.deltaY < 0) zoomIn(); else zoomOut();
+  e.preventDefault();
+}, { passive: false });
+
+// Annotations
+function toggleAnnot() {
+  lbAnnotMode = !lbAnnotMode;
+  const btn = document.getElementById('v-annot-btn');
+  const tools = document.getElementById('annot-tools');
+  const canvas = document.getElementById('v-canvas');
+  btn.classList.toggle('active');
+  tools.classList.toggle('show');
+  canvas.classList.toggle('active');
+  if (!lbAnnotMode) { editMode = false; document.getElementById('v-edit-btn').classList.remove('edit-active'); document.getElementById('v-edit-status').style.display = 'none'; canvas.classList.remove('edit-mode'); }
+  if (lbAnnotMode) {
+    fitCanvasToScreen();
+  }
+}
+
+function setAnnotColor(v) { annotColor = v }
+function setAnnotSize(v) { annotSize = v }
+function setTool(tool) { annotTool = tool;
+  document.querySelectorAll('.tool-btn[data-tool]').forEach(b => b.classList.remove('active'));
+  document.querySelector(`.tool-btn[data-tool="${tool}"]`).classList.add('active');
+}
+
+// Canvas drawing
+const canvas = document.getElementById('v-canvas');
+const ctx = canvas.getContext('2d');
+
+canvas.addEventListener('mousedown', startDraw);
+canvas.addEventListener('mousemove', draw);
+canvas.addEventListener('mouseup', endDraw);
+canvas.addEventListener('mouseleave', endDraw);
+canvas.addEventListener('touchstart', e => { const t = e.touches[0]; startDraw({ offsetX: t.clientX - canvas.getBoundingClientRect().left, offsetY: t.clientY - canvas.getBoundingClientRect().top, preventDefault: () => {} }); e.preventDefault() }, { passive: false });
+canvas.addEventListener('touchmove', e => { const t = e.touches[0]; draw({ offsetX: t.clientX - canvas.getBoundingClientRect().left, offsetY: t.clientY - canvas.getBoundingClientRect().top, preventDefault: () => {} }); e.preventDefault() }, { passive: false });
+canvas.addEventListener('touchend', endDraw);
+
+function getCanvasPos(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+}
+
+function startDraw(e) {
+  if (!lbAnnotMode) return;
+  isDrawing = true;
+  const pos = e.offsetX !== undefined ? { x: e.offsetX * (canvas.width / canvas.getBoundingClientRect().width), y: e.offsetY * (canvas.height / canvas.getBoundingClientRect().height) } : getCanvasPos(e);
+  startX = pos.x; startY = pos.y;
+  if (annotTool === 'free') { freePoints = [{ x: pos.x, y: pos.y }] }
+  else if (annotTool === 'text') {
+    const text = prompt('输入标注文字:');
+    if (text) {
+      annotHistory.push({ type: 'text', x: startX, y: startY, text, color: annotColor, size: annotSize });
+      redrawCanvas(); saveAnnotations();
+    }
+    isDrawing = false;
+  }
+}
+
+function draw(e) {
+  if (!isDrawing || !lbAnnotMode || annotTool === 'text') return;
+  const pos = e.offsetX !== undefined ? { x: e.offsetX * (canvas.width / canvas.getBoundingClientRect().width), y: e.offsetY * (canvas.height / canvas.getBoundingClientRect().height) } : getCanvasPos(e);
+  redrawCanvas();
+  ctx.beginPath();
+  ctx.strokeStyle = annotColor;
+  ctx.lineWidth = annotSize;
+  ctx.fillStyle = annotColor;
+  if (annotTool === 'free') {
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    freePoints.push({ x: pos.x, y: pos.y });
+    if (freePoints.length > 1) {
+      ctx.moveTo(freePoints[freePoints.length - 2].x, freePoints[freePoints.length - 2].y);
+      ctx.lineTo(pos.x, pos.y);
+    }
+    ctx.stroke();
+  } else if (annotTool === 'arrow') {
+    const angle = Math.atan2(pos.y - startY, pos.x - startX);
+    const len = Math.sqrt((pos.x - startX) ** 2 + (pos.y - startY) ** 2);
+    if (len < 5) return;
+    ctx.moveTo(startX, startY); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+    const hl = Math.min(15, len * 0.3);
+    ctx.beginPath(); ctx.moveTo(pos.x, pos.y);
+    ctx.lineTo(pos.x - hl * Math.cos(angle - 0.4), pos.y - hl * Math.sin(angle - 0.4));
+    ctx.lineTo(pos.x - hl * Math.cos(angle + 0.4), pos.y - hl * Math.sin(angle + 0.4));
+    ctx.closePath(); ctx.fill();
+  } else if (annotTool === 'line') {
+    ctx.moveTo(startX, startY); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+  } else if (annotTool === 'circle') {
+    const cx = (startX + pos.x) / 2, cy = (startY + pos.y) / 2;
+    const rx = Math.abs(pos.x - startX) / 2, ry = Math.abs(pos.y - startY) / 2;
+    ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
+  } else if (annotTool === 'rect') {
+    ctx.strokeRect(startX, startY, pos.x - startX, pos.y - startY);
+  }
+}
+
+function endDraw(e) {
+  if (!isDrawing || !lbAnnotMode) return;
+  isDrawing = false;
+  if (annotTool === 'free' && freePoints && freePoints.length > 1) {
+    annotHistory.push({ type: 'free', points: freePoints.slice(), color: annotColor, size: annotSize });
+    freePoints = null;
+    redrawCanvas(); saveAnnotations();
+  } else if (annotTool !== 'text') {
+    const pos = e && e.offsetX !== undefined ? { x: e.offsetX * (canvas.width / canvas.getBoundingClientRect().width), y: e.offsetY * (canvas.height / canvas.getBoundingClientRect().height) } : { x: startX, y: startY };
+    annotHistory.push({ type: annotTool, x1: startX, y1: startY, x2: pos.x, y2: pos.y, color: annotColor, size: annotSize });
+    redrawCanvas(); saveAnnotations();
+  }
+  freePoints = null;
+}
+
+function saveAnnotations() {
+  if (!lbItems[lbIdx]) return;
+  const key = `${lbItems[lbIdx].brand}|${lbItems[lbIdx].model}|${lbItems[lbIdx].file}`;
+  localStorage.setItem('annot_' + key, JSON.stringify(annotHistory));
+}
+
+function loadAnnotations() {
+  if (!lbItems[lbIdx]) return;
+  const key = `${lbItems[lbIdx].brand}|${lbItems[lbIdx].model}|${lbItems[lbIdx].file}`;
+  const saved = localStorage.getItem('annot_' + key);
+  if (saved) {
+    try { annotHistory = JSON.parse(saved) } catch(e) { annotHistory = [] }
+  } else { annotHistory = [] }
+  redrawCanvas();
+}
+
+function undoAnnot() {
+  if (annotHistory.length > 0) annotHistory.pop();
+  redrawCanvas();
+  saveAnnotations();
+}
+
+function clearAnnot() {
+  if (confirm('清除所有标注?')) {
+    annotHistory = [];
+    redrawCanvas();
+    saveAnnotations();
+  }
+}
+
+// Edit mode
+function toggleEditMode() {
+  editMode = !editMode;
+  const btn = document.getElementById('v-edit-btn');
+  const status = document.getElementById('v-edit-status');
+  const canvas = document.getElementById('v-canvas');
+  btn.classList.toggle('edit-active');
+  canvas.classList.toggle('edit-mode');
+  status.style.display = editMode ? 'inline' : 'none';
+  selectedAnnot = -1;
+  redrawCanvas();
+}
+
+function distToSegment(px, py, x1, y1, x2, y2) {
+  const dx = x2 - x1, dy = y2 - y1;
+  const lenSq = dx * dx + dy * dy;
+  if (lenSq === 0) return Math.hypot(px - x1, py - y1);
+  let t = ((px - x1) * dx + (py - y1) * dy) / lenSq;
+  t = Math.max(0, Math.min(1, t));
+  return Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy));
+}
+
+function findAnnotation(x, y) {
+  const threshold = 15;
+  for (let i = annotHistory.length - 1; i >= 0; i--) {
+    const a = annotHistory[i];
+    if (a.type === 'free' && a.points) {
+      for (let j = 1; j < a.points.length; j++) {
+        if (distToSegment(x, y, a.points[j-1].x, a.points[j-1].y, a.points[j].x, a.points[j].y) < threshold) return i;
+      }
+    } else if (a.type === 'text') {
+      if (Math.hypot(x - a.x, y - a.y) < threshold) return i;
+    } else if (a.x1 !== undefined && a.x2 !== undefined) {
+      const cx = (a.x1 + a.x2) / 2, cy = (a.y1 + a.y2) / 2;
+      if (Math.hypot(x - cx, y - cy) < threshold || distToSegment(x, y, a.x1, a.y1, a.x2, a.y2) < threshold) return i;
+    }
+  }
+  return -1;
+}
+
+function deleteSelected() {
+  if (selectedAnnot < 0 || selectedAnnot >= annotHistory.length) return;
+  annotHistory.splice(selectedAnnot, 1);
+  selectedAnnot = -1;
+  redrawCanvas();
+  saveAnnotations();
+}
+
+function redrawCanvas() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  annotHistory.forEach((a, i) => {
+    const isSel = i === selectedAnnot;
+    ctx.strokeStyle = a.color || '#ff4444';
+    ctx.lineWidth = (a.size || 3) + (isSel ? 3 : 0);
+    ctx.fillStyle = a.color || '#ff4444';
+    if (a.type === 'free' && a.points && a.points.length > 1) {
+      ctx.lineCap = 'round'; ctx.lineJoin = 'round'; ctx.beginPath();
+      ctx.moveTo(a.points[0].x, a.points[0].y);
+      for (let i = 1; i < a.points.length; i++) ctx.lineTo(a.points[i].x, a.points[i].y);
+      ctx.stroke();
+    } else if (a.type === 'line') {
+      ctx.beginPath(); ctx.moveTo(a.x1, a.y1); ctx.lineTo(a.x2, a.y2); ctx.stroke();
+    } else if (a.type === 'circle') {
+      const cx = (a.x1 + a.x2) / 2, cy = (a.y1 + a.y2) / 2;
+      const rx = Math.abs(a.x2 - a.x1) / 2, ry = Math.abs(a.y2 - a.y1) / 2;
+      ctx.beginPath(); ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2); ctx.stroke();
+    } else if (a.type === 'arrow') {
+      const ax1 = a.x1, ay1 = a.y1, ax2 = a.x2, ay2 = a.y2;
+      const angle = Math.atan2(ay2 - ay1, ax2 - ax1);
+      const len = Math.sqrt((ax2 - ax1) ** 2 + (ay2 - ay1) ** 2);
+      ctx.beginPath(); ctx.moveTo(ax1, ay1); ctx.lineTo(ax2, ay2); ctx.stroke();
+      const hl = Math.min(15, len * 0.3);
+      ctx.beginPath(); ctx.moveTo(ax2, ay2);
+      ctx.lineTo(ax2 - hl * Math.cos(angle - 0.4), ay2 - hl * Math.sin(angle - 0.4));
+      ctx.lineTo(ax2 - hl * Math.cos(angle + 0.4), ay2 - hl * Math.sin(angle + 0.4));
+      ctx.closePath(); ctx.fill();
+    } else if (a.type === 'rect') {
+      ctx.strokeRect(a.x1, a.y1, a.x2 - a.x1, a.y2 - a.y1);
+    } else if (a.type === 'text') {
+      ctx.font = `${(a.size || 3) * 5}px sans-serif`;
+      ctx.fillText(a.text, a.x, a.y);
+    }
+    if (isSel) {
+      ctx.strokeStyle = '#4fc3f7';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 5]);
+      if (a.type === 'text') {
+        ctx.strokeRect(a.x - 20, a.y - 20, 40, 40);
+      } else if (a.x1 !== undefined && a.x2 !== undefined) {
+        const x = Math.min(a.x1, a.x2), y = Math.min(a.y1, a.y2);
+        const w = Math.abs(a.x2 - a.x1), h = Math.abs(a.y2 - a.y1);
+        ctx.strokeRect(x - 3, y - 3, w + 6, h + 6);
+      }
+      ctx.setLineDash([]);
+    }
+  });
+}
+
+// Edit mode: canvas click to select
+canvas.addEventListener('click', function(e) {
+  if (!lbAnnotMode || !editMode) return;
+  const pos = e.offsetX !== undefined ? { x: e.offsetX * (canvas.width / canvas.getBoundingClientRect().width), y: e.offsetY * (canvas.height / canvas.getBoundingClientRect().height) } : { x: 0, y: 0 };
+  const idx = findAnnotation(pos.x, pos.y);
+  selectedAnnot = idx;
+  redrawCanvas();
+});
+
+// Keyboard shortcuts for edit mode
+document.addEventListener('keydown', e => {
+  if (document.getElementById('viewer').style.display !== 'flex') return;
+  if (e.key === 'ArrowLeft') { if (editMode && selectedAnnot >= 0) { e.preventDefault(); nudgeAnnot(-2, 0) } else prevImage() }
+  else if (e.key === 'ArrowRight') { if (editMode && selectedAnnot >= 0) { e.preventDefault(); nudgeAnnot(2, 0) } else nextImage() }
+  else if (e.key === 'ArrowUp') { if (editMode && selectedAnnot >= 0) { e.preventDefault(); nudgeAnnot(0, -2) } }
+  else if (e.key === 'ArrowDown') { if (editMode && selectedAnnot >= 0) { e.preventDefault(); nudgeAnnot(0, 2) } }
+  else if (e.key === 'Delete' || e.key === 'Backspace') { if (editMode && selectedAnnot >= 0) { e.preventDefault(); deleteSelected() } }
+  if (e.key === '+' || e.key === '=') zoomIn();
+  if (e.key === '-') zoomOut();
+  if (e.key === 'r') rotateImg(90);
+  if (e.key === 'a' && e.ctrlKey) { e.preventDefault(); toggleAnnot() }
+});
+
+function nudgeAnnot(dx, dy) {
+  const a = annotHistory[selectedAnnot];
+  if (!a) return;
+  const scale = canvas.width / canvas.getBoundingClientRect().width;
+  const sdx = dx * scale, sdy = dy * scale;
+  if (a.type === 'free' && a.points) { a.points.forEach(p => { p.x += sdx; p.y += sdy }) }
+  else if (a.type === 'text') { a.x += sdx; a.y += sdy }
+  else { a.x1 += sdx; a.y1 += sdy; a.x2 += sdx; a.y2 += sdy }
+  redrawCanvas();
+  saveAnnotations();
+}
+
+// Resize handler for canvas
+window.addEventListener('resize', () => {
+  if (lbAnnotMode) fitCanvasToScreen();
+});
+
+init();
+</script>
+</body>
+</html>
