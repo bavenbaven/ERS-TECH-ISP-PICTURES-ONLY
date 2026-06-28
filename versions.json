@@ -1,31 +1,26 @@
 {
-  "latest": "3.2.0",
-  "min_version": "0.3.0",
-  "versions": [
-    {
-      "version": "3.2.0",
-      "url": "https://github.com/bavenbaven/ERS-TECH-ISP-PICTURES-ONLY/releases/download/3.2.0/ERS.Tech.ISP._3.2.0_x64-setup.exe",
-      "changelog": "v3.2.0 鏇存柊鍐呭锛歕n- 鍒嗙鍥剧墖浠撳簱涓庝唬鐮佷粨搴揬n- 鍥剧墖杩佺Щ鍒板叕寮€浠撳簱\n- 浼樺寲鍚屾閫昏緫\n- 淇鐧诲綍楠岃瘉\n- 鏈湴鍥剧墖鍔犺浇浼樺寲"
-    },
-    {
-      "version": "3.1.0",
-      "url": "https://github.com/bavenbaven/Software-Releases/releases/download/v3.1.0/ERS_Tech_ISP_3.1.0_x64-setup.exe",
-      "changelog": "v3.1.0 鏇存柊鍐呭锛歕n- 缁熶竴鍙戝竷鍒?Software-Releases 浠撳簱\n- 淇鐧诲綍楠岃瘉\n- 鏈湴鍥剧墖鍔犺浇浼樺寲\n- 绉婚櫎璋冭瘯鏃ュ織"
-    },
-    {
-      "version": "2.1.0",
-      "url": "https://github.com/bavenbaven/ERS-Tech-ISP-Images/releases/download/v2.1.0/ERS_Tech_ISP_2.1.0_x64-setup.exe",
-      "changelog": "v2.1.0 鏇存柊鍐呭锛歕n- 淇鎺堟潈楠岃瘉\n- 淇鏇存柊鍦板潃URL\n- 娣诲姞200涓处鍙穃n- 杩佺Щ鍒版纭粨搴?
-    },
-    {
-      "version": "1.1.0",
-      "url": "https://github.com/bavenbaven/ERS-Tech-ISP-%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8/releases/download/v1.1.0/ERS.Tech.ISP.%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8_1.1.0_x64-setup.exe",
-      "changelog": "v1.1.0 鏇存柊鍐呭锛歕n- 娣诲姞Tauri鑷姩鏇存柊绛惧悕楠岃瘉\n- 鐗堟湰鎺у埗浼樺寲"
-    },
-    {
-      "version": "0.3.0",
-      "url": "https://github.com/bavenbaven/ERS-Tech-ISP-%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8/releases/download/v0.3.0/ERS.Tech.ISP.%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8_0.3.0_x64-setup.exe",
-      "changelog": "v0.3.0 鐗堟湰"
-    }
-  ]
+    "latest":  "3.2.0",
+    "min_version":  "0.3.0",
+    "versions":  [
+                     {
+                         "changelog":  "v3.2.0\n- fix version verify login issue\n- add 200 users",
+                         "url":  "https://github.com/bavenbaven/ERS-Tech-ISP-Images/releases/download/v3.2.0/ERS.Tech.ISP._3.2.0_x64-setup.exe",
+                         "version":  "3.2.0"
+                     },
+                     {
+                         "version":  "2.1.0",
+                         "url":  "https://github.com/bavenbaven/ERS-Tech-ISP-Images/releases/download/v2.1.0/ERS.Tech.ISP._2.1.0_x64-setup.exe",
+                         "changelog":  "v2.1.0 更新内容：\n- 修复授权验证\n- 修复更新地址URL\n- 添加200个账号\n- 迁移到正确仓库"
+                     },
+                     {
+                         "version":  "1.1.0",
+                         "url":  "https://github.com/bavenbaven/ERS-Tech-ISP-%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8/releases/download/v1.1.0/ERS.Tech.ISP.%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8_1.1.0_x64-setup.exe",
+                         "changelog":  "v1.1.0 更新内容：\n- 添加Tauri自动更新签名验证\n- 版本控制优化\n- 只支持V1.1.0和V0.3.0"
+                     },
+                     {
+                         "version":  "0.3.0",
+                         "url":  "https://github.com/bavenbaven/ERS-Tech-ISP-%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8/releases/download/v0.3.0/ERS.Tech.ISP.%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8_0.3.0_x64-setup.exe",
+                         "changelog":  "v0.3.0 版本"
+                     }
+                 ]
 }
