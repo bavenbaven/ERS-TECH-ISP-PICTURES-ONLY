@@ -21,6 +21,12 @@ jobs:
       - name: Install dependencies
         run: pip install pycryptodome
 
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config http.postBuffer 524288000
+
       - name: Encrypt images to ERS
         run: |
           python3 << 'PYEOF'
@@ -35,7 +41,6 @@ jobs:
 
           key = hashlib.sha256(AUTH.encode() + SALT).digest()
 
-          # Collect all files to encrypt
           files_to_encrypt = []
           for root, dirs, files in os.walk("."):
               for f in files:
@@ -45,7 +50,6 @@ jobs:
 
           print(f"Found {len(files_to_encrypt)} files to encrypt")
 
-          # Process in batches of 500
           BATCH = 500
           count = 0
           batch_num = 0
@@ -63,7 +67,6 @@ jobs:
                   fp.unlink()
                   count += 1
 
-              # Commit this batch
               batch_num += 1
               subprocess.run(["git", "add", "-A"], check=True)
               result = subprocess.run(["git", "diff", "--cached", "--quiet"], check=False)
