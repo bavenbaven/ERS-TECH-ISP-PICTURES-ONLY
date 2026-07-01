@@ -3,6 +3,9 @@ name: Encrypt Images to ERS
 on:
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   encrypt:
     runs-on: ubuntu-latest
