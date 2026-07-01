@@ -21,6 +21,12 @@ jobs:
       - name: Install dependencies
         run: pip install pycryptodome
 
+      - name: Configure Git for large pushes
+        run: |
+          git config http.postBuffer 524288000
+          git config http.lowSpeedLimit 0
+          git config http.lowSpeedTime 999999
+
       - name: Encrypt images to ERS
         run: |
           python3 << 'PYEOF'
@@ -50,23 +56,20 @@ jobs:
                   ext_b = ext.encode()[1:][:15]
                   out.write_bytes(ERS_MAGIC + bytes([len(ext_b)]) + ext_b + nonce + ct + tag)
                   count += 1
-                  print(f"[{count}] {fp} -> {out.name}")
+                  if count % 500 == 0:
+                      print(f"  ...{count} files encrypted so far")
 
           print(f"\nDone! Encrypted {count} files")
           PYEOF
 
-      - name: Delete original images (keep only ERS)
+      - name: Delete original images
         run: |
           find . -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.bmp" -o -name "*.gif" -o -name "*.webp" \) -not -path "./.git/*" -delete
 
-      - name: Commit changes
+      - name: Commit and push (in batches)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add -A
-          if git diff --cached --quiet; then
-            echo "No changes to commit"
-          else
-            git commit -m "Auto-encrypt images to ERS format"
-            git push
-          fi
+          git commit -m "Auto-encrypt images to ERS format" || echo "No changes to commit"
+          git push
