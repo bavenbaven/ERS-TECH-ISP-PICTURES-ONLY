@@ -21,16 +21,10 @@ jobs:
       - name: Install dependencies
         run: pip install pycryptodome
 
-      - name: Configure Git for large pushes
-        run: |
-          git config http.postBuffer 524288000
-          git config http.lowSpeedLimit 0
-          git config http.lowSpeedTime 999999
-
       - name: Encrypt images to ERS
         run: |
           python3 << 'PYEOF'
-          import os, hashlib, secrets
+          import os, hashlib, secrets, subprocess
           from pathlib import Path
           from Crypto.Cipher import AES
 
@@ -40,36 +34,46 @@ jobs:
           SUPPORTED = {".png", ".jpg", ".jpeg", ".bmp", ".gif", ".webp"}
 
           key = hashlib.sha256(AUTH.encode() + SALT).digest()
-          count = 0
 
+          # Collect all files to encrypt
+          files_to_encrypt = []
           for root, dirs, files in os.walk("."):
               for f in files:
                   fp = Path(root) / f
-                  ext = fp.suffix.lower()
-                  if ext not in SUPPORTED:
-                      continue
+                  if fp.suffix.lower() in SUPPORTED:
+                      files_to_encrypt.append(fp)
+
+          print(f"Found {len(files_to_encrypt)} files to encrypt")
+
+          # Process in batches of 500
+          BATCH = 500
+          count = 0
+          batch_num = 0
+
+          for i in range(0, len(files_to_encrypt), BATCH):
+              batch = files_to_encrypt[i:i+BATCH]
+              for fp in batch:
                   out = fp.with_suffix(".ers")
                   data = fp.read_bytes()
                   nonce = secrets.token_bytes(12)
                   cipher = AES.new(key, AES.MODE_GCM, nonce=nonce)
                   ct, tag = cipher.encrypt_and_digest(data)
-                  ext_b = ext.encode()[1:][:15]
+                  ext_b = fp.suffix.encode()[1:][:15]
                   out.write_bytes(ERS_MAGIC + bytes([len(ext_b)]) + ext_b + nonce + ct + tag)
+                  fp.unlink()
                   count += 1
-                  if count % 500 == 0:
-                      print(f"  ...{count} files encrypted so far")
 
-          print(f"\nDone! Encrypted {count} files")
+              # Commit this batch
+              batch_num += 1
+              subprocess.run(["git", "add", "-A"], check=True)
+              result = subprocess.run(["git", "diff", "--cached", "--quiet"], check=False)
+              if result.returncode != 0:
+                  msg = f"Encrypt batch {batch_num} ({count}/{len(files_to_encrypt)} files)"
+                  subprocess.run(["git", "commit", "-m", msg], check=True)
+                  subprocess.run(["git", "push"], check=True)
+                  print(f"Pushed batch {batch_num}: {count}/{len(files_to_encrypt)}")
+              else:
+                  print(f"Batch {batch_num}: no changes")
+
+          print(f"\nDone! Encrypted {count} files in {batch_num} batches")
           PYEOF
-
-      - name: Delete original images
-        run: |
-          find . -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" -o -name "*.bmp" -o -name "*.gif" -o -name "*.webp" \) -not -path "./.git/*" -delete
-
-      - name: Commit and push (in batches)
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -m "Auto-encrypt images to ERS format" || echo "No changes to commit"
-          git push
