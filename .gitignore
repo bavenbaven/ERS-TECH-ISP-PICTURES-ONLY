@@ -1,0 +1,16 @@
+# Source code - not for PICTURES-ONLY repo
+taiku/
+frontend/
+
+# Temp files
+*.tmp
+*.bak
+*.log
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# Editor
+*.swp
+*.swo
