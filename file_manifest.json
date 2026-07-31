@@ -1,0 +1,25 @@
+{
+    "files": [
+        {
+            "path": "metadata.json",
+            "size": 619507,
+            "hash": "20379eded0801eae35c9f5148de68e70af038efb58b76a54210c12aefb76fecc"
+        },
+        {
+            "path": "versions.json",
+            "size": 1292,
+            "hash": "de2e9d0e3c9512475ed0a07a7d2a9ccdd5d36d46f6d57c503ec3830143042bd9"
+        },
+        {
+            "path": "cloudflare-worker.js",
+            "size": 2213,
+            "hash": "8177a94576e978f88419f01de0670463126e4582feb3aceb296b089f909f7c8d"
+        },
+        {
+            "path": "auth.json",
+            "size": 32613,
+            "hash": "c0f313afed22e2c78abeeee00516f29c7488ff0ac2cc086438ef66fc3c0effed"
+        }
+    ],
+    "version": "3.6.0"
+}

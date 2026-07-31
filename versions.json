@@ -1,0 +1,21 @@
+{
+    "min_version":  "2.1.0",
+    "latest":  "3.6.0",
+    "versions":  [
+                     {
+                         "changelog":  "v3.6.0 - 新增增量更新，只下载有更改的文件",
+                         "url":  "https://raw.githubusercontent.com/bavenbaven/Software-Releases/main/ERS%20TECH%20ISP%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8/ERS%20Tech%20ISP%20%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8_3.6.0_x64-setup.exe",
+                         "version":  "3.6.0"
+                     },
+                     {
+                         "changelog":  "v3.5.0 - 纯JPG模式，移除.ers加密",
+                         "url":  "https://raw.githubusercontent.com/bavenbaven/Software-Releases/main/ERS%20TECH%20ISP%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8/ERS%20Tech%20ISP%20%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8_3.5.0_x64-setup.exe",
+                         "version":  "3.5.0"
+                     },
+                     {
+                         "changelog":  "v2.1.0 - 修复授权验证",
+                         "url":  "https://github.com/bavenbaven/ERS-Tech-ISP--/releases/download/v2.1.0/ERS%20Tech%20ISP%20%E7%9F%AD%E6%8E%A5%E5%AE%9D%E5%85%B8_2.1.0_x64-setup.exe",
+                         "version":  "2.1.0"
+                     }
+                 ]
+}
